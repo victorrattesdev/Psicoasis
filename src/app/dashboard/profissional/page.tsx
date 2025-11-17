@@ -11,6 +11,21 @@ export default function ProfissionalDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("inicio");
   const [counts, setCounts] = useState<{ todayCount: number; patientsCount: number; monthlyRevenue: number } | null>(null);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [canPostBlog, setCanPostBlog] = useState(false);
+  const [blogForm, setBlogForm] = useState({
+    title: "",
+    content: "",
+    excerpt: "",
+    coverImage: "",
+    category: "",
+    metaTitle: "",
+    metaDescription: "",
+    keywords: "",
+    published: false
+  });
+  const [isSubmittingBlog, setIsSubmittingBlog] = useState(false);
 
   // Redirect admin users to admin dashboard
   useEffect(() => {
@@ -31,6 +46,36 @@ export default function ProfissionalDashboard() {
     };
     load();
   }, [user?.id]);
+
+  // Load current therapist photo and blog permission
+  useEffect(() => {
+    const loadTherapist = async () => {
+      if (!user?.id || user.type !== 'profissional') return;
+      try {
+        const res = await fetch(`/api/therapists/${user.id}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.photoUrl) setPhotoUrl(data.photoUrl);
+        if (data?.canPostBlog) setCanPostBlog(data.canPostBlog);
+      } catch {}
+    };
+    loadTherapist();
+  }, [user?.id, user?.type]);
+
+  const handleSavePhoto = async () => {
+    if (!user?.id || !photoUrl) return;
+    setIsSavingPhoto(true);
+    try {
+      const res = await fetch('/api/therapists/photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user.id, photoUrl })
+      });
+      if (!res.ok) return;
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
 
   // Sample data - in a real app, this would come from the database
   const todayAppointments = [
@@ -111,9 +156,9 @@ export default function ProfissionalDashboard() {
   const renderInicio = () => (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-6 text-white">
         <h2 className="text-2xl font-bold mb-2">Bem-vindo, {user?.name}!</h2>
-        <p className="text-purple-100">
+        <p className="text-emerald-100">
           Você tem {todayAppointments.length} consultas agendadas para hoje. Continue fazendo a diferença na vida dos seus pacientes.
         </p>
       </div>
@@ -207,7 +252,7 @@ export default function ProfissionalDashboard() {
                     }`}>
                       {appointment.status}
                     </span>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    <button className="text-green-600 hover:text-green-800 text-sm font-medium">
                       Iniciar
                     </button>
                   </div>
@@ -282,7 +327,7 @@ export default function ProfissionalDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Minhas Consultas</h2>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
           Nova Consulta
         </button>
       </div>
@@ -294,7 +339,7 @@ export default function ProfissionalDashboard() {
             onClick={() => setActiveTab("hoje")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "hoje"
-                ? "border-indigo-500 text-indigo-600"
+                ? "border-green-500 text-green-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -304,7 +349,7 @@ export default function ProfissionalDashboard() {
             onClick={() => setActiveTab("proximas")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "proximas"
-                ? "border-indigo-500 text-indigo-600"
+                ? "border-green-500 text-green-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -314,7 +359,7 @@ export default function ProfissionalDashboard() {
             onClick={() => setActiveTab("historico")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "historico"
-                ? "border-indigo-500 text-indigo-600"
+                ? "border-green-500 text-green-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
@@ -350,7 +395,7 @@ export default function ProfissionalDashboard() {
                     }`}>
                       {appointment.status}
                     </span>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    <button className="text-green-600 hover:text-green-800 text-sm font-medium">
                       Iniciar
                     </button>
                     <button className="text-gray-600 hover:text-gray-800 text-sm font-medium">
@@ -386,7 +431,7 @@ export default function ProfissionalDashboard() {
                     }`}>
                       {appointment.status}
                     </span>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    <button className="text-green-600 hover:text-green-800 text-sm font-medium">
                       Ver Detalhes
                     </button>
                     <button className="text-red-600 hover:text-red-800 text-sm font-medium">
@@ -415,7 +460,7 @@ export default function ProfissionalDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Meus Pacientes</h2>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
           Adicionar Paciente
         </button>
       </div>
@@ -444,7 +489,7 @@ export default function ProfissionalDashboard() {
                     {patient.status}
                   </span>
                   <span className="text-sm text-gray-600">{patient.progress}</span>
-                  <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                  <button className="text-green-600 hover:text-green-800 text-sm font-medium">
                     Ver Perfil
                   </button>
                 </div>
@@ -463,16 +508,38 @@ export default function ProfissionalDashboard() {
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6">
           <div className="flex items-center space-x-6 mb-6">
-            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
+            {photoUrl ? (
+              <img src={photoUrl} alt={user?.name || 'Foto de perfil'} className="w-20 h-20 rounded-full object-cover" />
+            ) : (
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
             <div>
               <h3 className="text-xl font-semibold text-gray-900">{user?.name}</h3>
               <p className="text-gray-600">{user?.email}</p>
               <p className="text-sm text-gray-500">{user?.crp} - Psicóloga Clínica</p>
             </div>
+          </div>
+
+          {/* Photo URL field */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">URL da Foto de Perfil</label>
+            <div className="flex gap-3">
+              <input
+                type="url"
+                placeholder="https://..."
+                value={photoUrl}
+                onChange={(e) => setPhotoUrl(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              <button onClick={handleSavePhoto} disabled={!photoUrl || isSavingPhoto} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                {isSavingPhoto ? 'Salvando...' : 'Salvar Foto'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Use um link público (ex: CDN/drive com link direto a imagem).</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -481,7 +548,7 @@ export default function ProfissionalDashboard() {
               <input
                 type="text"
                 value={user?.name || ""}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -489,7 +556,7 @@ export default function ProfissionalDashboard() {
               <input
                 type="text"
                 value={user?.crp || ""}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -497,7 +564,7 @@ export default function ProfissionalDashboard() {
               <input
                 type="email"
                 value={user?.email || ""}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -505,14 +572,14 @@ export default function ProfissionalDashboard() {
               <input
                 type="tel"
                 value={user?.telefone || ""}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Especialidades</label>
               <div className="flex flex-wrap gap-2">
                 {user?.especialidades?.map((especialidade, index) => (
-                  <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full">
+                  <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
                     {especialidade}
                   </span>
                 ))}
@@ -523,7 +590,7 @@ export default function ProfissionalDashboard() {
               <textarea
                 rows={4}
                 value={user?.bio || ""}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -532,8 +599,201 @@ export default function ProfissionalDashboard() {
             <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
               Cancelar
             </button>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
               Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const handleSubmitBlog = async () => {
+    if (!user?.id || !blogForm.title || !blogForm.content) {
+      alert('Título e conteúdo são obrigatórios');
+      return;
+    }
+    setIsSubmittingBlog(true);
+    try {
+      const res = await fetch('/api/blog/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          therapistId: user.id,
+          ...blogForm
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erro ao criar post');
+      }
+      const data = await res.json();
+      alert('Post criado com sucesso!');
+      setBlogForm({
+        title: "",
+        content: "",
+        excerpt: "",
+        coverImage: "",
+        category: "",
+        metaTitle: "",
+        metaDescription: "",
+        keywords: "",
+        published: false
+      });
+      if (data.slug) {
+        window.open(`/blog/${data.slug}`, '_blank');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro ao criar post');
+    } finally {
+      setIsSubmittingBlog(false);
+    }
+  };
+
+  const renderBlog = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Criar Novo Post</h2>
+      
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <input
+              type="text"
+              value={blogForm.title}
+              onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Título do artigo"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Resumo (Excerpt)</label>
+            <textarea
+              rows={3}
+              value={blogForm.excerpt}
+              onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Breve descrição do artigo"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo *</label>
+            <textarea
+              rows={15}
+              value={blogForm.content}
+              onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm"
+              placeholder="Conteúdo do artigo (HTML permitido)"
+            />
+            <p className="text-xs text-gray-500 mt-1">Você pode usar HTML básico para formatação.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+              <select
+                value={blogForm.category}
+                onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">Selecione...</option>
+                <option value="Saúde Mental">Saúde Mental</option>
+                <option value="Adolescentes">Adolescentes</option>
+                <option value="Bem-estar">Bem-estar</option>
+                <option value="Família">Família</option>
+                <option value="Superdotação">Superdotação</option>
+                <option value="Altas Habilidades">Altas Habilidades</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem de Capa</label>
+              <input
+                type="url"
+                value={blogForm.coverImage}
+                onChange={(e) => setBlogForm({ ...blogForm, coverImage: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO (Opcional)</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Meta Título</label>
+                <input
+                  type="text"
+                  value={blogForm.metaTitle}
+                  onChange={(e) => setBlogForm({ ...blogForm, metaTitle: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Título para SEO (padrão: título do post)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Meta Descrição</label>
+                <textarea
+                  rows={2}
+                  value={blogForm.metaDescription}
+                  onChange={(e) => setBlogForm({ ...blogForm, metaDescription: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Descrição para SEO (padrão: excerpt)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Palavras-chave</label>
+                <input
+                  type="text"
+                  value={blogForm.keywords}
+                  onChange={(e) => setBlogForm({ ...blogForm, keywords: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="palavra1, palavra2, palavra3"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="published"
+              checked={blogForm.published}
+              onChange={(e) => setBlogForm({ ...blogForm, published: e.target.checked })}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
+              Publicar imediatamente
+            </label>
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setBlogForm({
+                title: "",
+                content: "",
+                excerpt: "",
+                coverImage: "",
+                category: "",
+                metaTitle: "",
+                metaDescription: "",
+                keywords: "",
+                published: false
+              })}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Limpar
+            </button>
+            <button
+              onClick={handleSubmitBlog}
+              disabled={isSubmittingBlog || !blogForm.title || !blogForm.content}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {isSubmittingBlog ? 'Salvando...' : 'Criar Post'}
             </button>
           </div>
         </div>
@@ -549,8 +809,8 @@ export default function ProfissionalDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="flex items-center space-x-4">
@@ -587,7 +847,7 @@ export default function ProfissionalDashboard() {
                 onClick={() => setActiveTab("inicio")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === "inicio"
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-green-100 text-green-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -600,7 +860,7 @@ export default function ProfissionalDashboard() {
                 onClick={() => setActiveTab("consultas")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === "consultas"
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-green-100 text-green-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -613,7 +873,7 @@ export default function ProfissionalDashboard() {
                 onClick={() => setActiveTab("pacientes")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === "pacientes"
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-green-100 text-green-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -626,7 +886,7 @@ export default function ProfissionalDashboard() {
                 onClick={() => setActiveTab("perfil")}
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeTab === "perfil"
-                    ? "bg-indigo-100 text-indigo-700"
+                    ? "bg-green-100 text-green-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -635,6 +895,21 @@ export default function ProfissionalDashboard() {
                 </svg>
                 Perfil
               </button>
+              {canPostBlog && (
+                <button
+                  onClick={() => setActiveTab("blog")}
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    activeTab === "blog"
+                      ? "bg-green-100 text-green-700"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Criar Post
+                </button>
+              )}
               <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -663,6 +938,7 @@ export default function ProfissionalDashboard() {
             {activeTab === "consultas" && renderConsultas()}
             {activeTab === "pacientes" && renderPacientes()}
             {activeTab === "perfil" && renderPerfil()}
+            {activeTab === "blog" && canPostBlog && renderBlog()}
           </div>
         </div>
       </div>

@@ -136,19 +136,19 @@ export default function PacienteRegistroPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login" 
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro" 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Registrar
               </Link>
@@ -189,7 +189,7 @@ export default function PacienteRegistroPage() {
                     name="nome"
                     value={formData.nome}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.nome ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Seu nome completo"
@@ -207,7 +207,7 @@ export default function PacienteRegistroPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.email ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="seu@email.com"
@@ -225,7 +225,7 @@ export default function PacienteRegistroPage() {
                     name="telefone"
                     value={formData.telefone}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.telefone ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="(11) 99999-9999"
@@ -243,7 +243,7 @@ export default function PacienteRegistroPage() {
                     name="dataNascimento"
                     value={formData.dataNascimento}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.dataNascimento ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -259,7 +259,7 @@ export default function PacienteRegistroPage() {
                     name="genero"
                     value={formData.genero}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.genero ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -288,7 +288,7 @@ export default function PacienteRegistroPage() {
                     name="endereco"
                     value={formData.endereco}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Rua, número, complemento"
                   />
                 </div>
@@ -304,7 +304,7 @@ export default function PacienteRegistroPage() {
                       name="cidade"
                       value={formData.cidade}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="Sua cidade"
                     />
                   </div>
@@ -319,7 +319,7 @@ export default function PacienteRegistroPage() {
                       name="estado"
                       value={formData.estado}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="UF"
                     />
                   </div>
@@ -334,7 +334,7 @@ export default function PacienteRegistroPage() {
                       name="cep"
                       value={formData.cep}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="00000-000"
                     />
                   </div>
@@ -356,7 +356,7 @@ export default function PacienteRegistroPage() {
                     name="senha"
                     value={formData.senha}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.senha ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Mínimo 6 caracteres"
@@ -374,7 +374,7 @@ export default function PacienteRegistroPage() {
                     name="confirmarSenha"
                     value={formData.confirmarSenha}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                       errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Digite a senha novamente"
@@ -430,7 +430,7 @@ export default function PacienteRegistroPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
               >
                 {isSubmitting ? "Criando conta..." : "Criar Conta de Paciente"}
               </button>
@@ -440,7 +440,7 @@ export default function PacienteRegistroPage() {
             <div className="text-center">
               <Link 
                 href="/registro"
-                className="text-indigo-600 hover:text-indigo-800 text-sm underline"
+                className="text-green-600 hover:text-green-800 text-sm underline"
               >
                 ← Voltar para opções de registro
               </Link>

@@ -49,8 +49,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <Link href="/" className="text-3xl font-bold text-indigo-600">
-            Psicoasis
+          <Link href="/" className="text-3xl font-bold text-green-600">
+            OASIS da Superdotação
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             Acesso Administrativo
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="admin@admin.com"
                 />
               </div>
@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="Digite sua senha"
                 />
               </div>
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Entrando..." : "Entrar como Admin"}
               </button>
@@ -132,7 +132,7 @@ export default function AdminLoginPage() {
             <div className="mt-6 text-center">
               <Link
                 href="/login"
-                className="text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                className="text-green-600 hover:text-green-500 text-sm font-medium"
               >
                 ← Voltar para login de usuários
               </Link>

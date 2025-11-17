@@ -22,7 +22,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ id: created.id, email: created.email, name: created.name ?? '', type: 'paciente', role: created.role, profile: created.profile ?? {} });
     }
 
-    const created = await prisma.therapist.create({ data: { email, name: name ?? email.split('@')[0], specialties: [], profile: profile ?? null } });
+    const created = await prisma.therapist.create({ data: { 
+      email, 
+      name: name ?? email.split('@')[0], 
+      specialties: [], 
+      profile: profile ?? null,
+      photoUrl: profile?.photoUrl ?? null,
+      approved: false
+    } });
     return NextResponse.json({ id: created.id, email: created.email, name: created.name, type: 'profissional', role: 'USER', profile: created.profile ?? {} });
   } catch (error: any) {
     // Handle unique constraint errors nicely

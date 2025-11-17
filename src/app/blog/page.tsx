@@ -3,66 +3,48 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-// Sample blog posts - in a real app, this would come from the database
-const samplePosts = [
-  {
-    id: 1,
-    title: "Entendendo a Ansiedade: Guia Completo para Pacientes",
-    excerpt: "A ansiedade é uma resposta natural do nosso corpo, mas quando se torna excessiva, pode impactar significativamente nossa qualidade de vida. Neste artigo, exploramos as causas, sintomas e estratégias de enfrentamento.",
-    content: "A ansiedade é uma resposta natural do nosso corpo a situações de perigo ou estresse. No entanto, quando se torna excessiva ou desproporcional à situação, pode impactar significativamente nossa qualidade de vida...",
-    author: "Dr. Ana Silva",
-    publishedAt: "2024-01-15",
-    readTime: "8 min",
-    category: "Saúde Mental",
-    image: "/api/placeholder/400/250"
-  },
-  {
-    id: 2,
-    title: "Como Identificar Sinais de Depressão em Adolescentes",
-    excerpt: "A adolescência é um período de grandes mudanças e desafios. Reconhecer os sinais de depressão nesta fase é crucial para oferecer o apoio necessário.",
-    content: "A adolescência é um período marcado por transformações físicas, emocionais e sociais significativas. Durante esta fase, é comum experimentar altos e baixos emocionais...",
-    author: "Dr. Carlos Mendes",
-    publishedAt: "2024-01-10",
-    readTime: "6 min",
-    category: "Adolescentes",
-    image: "/api/placeholder/400/250"
-  },
-  {
-    id: 3,
-    title: "Técnicas de Mindfulness para Reduzir o Estresse",
-    excerpt: "O mindfulness é uma prática que pode ajudar significativamente na redução do estresse e na melhoria do bem-estar mental. Aprenda técnicas simples que você pode praticar no dia a dia.",
-    content: "O mindfulness, ou atenção plena, é uma prática milenar que tem ganhado cada vez mais reconhecimento na psicologia moderna...",
-    author: "Dra. Maria Santos",
-    publishedAt: "2024-01-05",
-    readTime: "10 min",
-    category: "Bem-estar",
-    image: "/api/placeholder/400/250"
-  },
-  {
-    id: 4,
-    title: "A Importância da Terapia Familiar",
-    excerpt: "A terapia familiar pode ser uma ferramenta poderosa para resolver conflitos e fortalecer os laços familiares. Descubra como ela pode beneficiar sua família.",
-    content: "A família é o primeiro ambiente social onde aprendemos a nos relacionar com outras pessoas. É natural que surjam conflitos e desafios...",
-    author: "Dr. João Oliveira",
-    publishedAt: "2024-01-01",
-    readTime: "7 min",
-    category: "Família",
-    image: "/api/placeholder/400/250"
-  }
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  category: string | null;
+  publishedAt: Date | null;
+  author: string;
+}
 
 export default function BlogPage() {
-  const [posts, setPosts] = useState(samplePosts);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const categories = ["Todos", "Saúde Mental", "Adolescentes", "Bem-estar", "Família"];
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const url = selectedCategory === "Todos" 
+          ? '/api/blog/posts'
+          : `/api/blog/posts?category=${encodeURIComponent(selectedCategory)}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setPosts(Array.isArray(data?.posts) ? data.posts : []);
+      } catch {}
+      finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [selectedCategory]);
+
+  const categories = ["Todos", "Saúde Mental", "Adolescentes", "Bem-estar", "Família", "Superdotação", "Altas Habilidades"];
 
   const filteredPosts = posts.filter(post => {
-    const matchesCategory = selectedCategory === "Todos" || post.category === selectedCategory;
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesSearch = searchTerm === "" || 
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (post.excerpt && post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesSearch;
   });
 
   return (
@@ -72,25 +54,25 @@ export default function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="/" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Início
                 </Link>
-                <Link href="/psicologos" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Psicólogos
+                <Link href="/psicologos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  OASIS da Psicologia
                 </Link>
-                <Link href="/blog" className="text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Blog
+                <Link href="/blog" className="text-green-600 px-3 py-2 rounded-md text-sm font-medium">
+                  Estudos do OASIS
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sobre
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Avaliação Neuropsicológica
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Contato
                 </Link>
               </div>
@@ -98,13 +80,13 @@ export default function BlogPage() {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro"
-                className="text-indigo-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-50 transition-colors"
+                className="text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors"
               >
                 Cadastrar
               </Link>
@@ -118,10 +100,10 @@ export default function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-              Blog Psicoasis
+              Estudos do OASIS
             </h1>
             <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Artigos e insights sobre saúde mental, bem-estar e psicologia para ajudar você em sua jornada de autoconhecimento.
+              Artigos e insights sobre superdotação, altas habilidades e psicologia para ajudar você em sua jornada de autoconhecimento.
             </p>
           </div>
         </div>
@@ -144,7 +126,7 @@ export default function BlogPage() {
                   placeholder="Buscar artigos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
                 />
               </div>
             </div>
@@ -157,7 +139,7 @@ export default function BlogPage() {
                   onClick={() => setSelectedCategory(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-green-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -171,7 +153,12 @@ export default function BlogPage() {
 
       {/* Blog Posts */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {filteredPosts.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando artigos...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -185,47 +172,56 @@ export default function BlogPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPosts.map((post) => (
               <article key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-w-16 aspect-h-9">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
+                {post.coverImage && (
+                  <div className="aspect-w-16 aspect-h-9">
+                    <img
+                      src={post.coverImage}
+                      alt={post.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                )}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                      {post.category}
-                    </span>
-                    <span className="text-sm text-gray-500">{post.readTime}</span>
+                    {post.category && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {post.category}
+                      </span>
+                    )}
+                    {post.publishedAt && (
+                      <span className="text-sm text-gray-500">
+                        {new Date(post.publishedAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    )}
                   </div>
                   
                   <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
                     {post.title}
                   </h2>
                   
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
+                  {post.excerpt && (
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {post.excerpt}
+                    </p>
+                  )}
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-indigo-600">
-                            {post.author.split(' ').map(n => n[0]).join('')}
+                      <div className="shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <span className="text-sm font-medium text-green-600">
+                            {post.author.split(' ').map(n => n[0]).slice(0,2).join('')}
                           </span>
                         </div>
                       </div>
                       <div className="ml-3">
                         <p className="text-sm font-medium text-gray-900">{post.author}</p>
-                        <p className="text-sm text-gray-500">{post.publishedAt}</p>
                       </div>
                     </div>
                     
                     <Link
-                      href={`/blog/${post.id}`}
-                      className="inline-flex items-center text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                      href={`/blog/${post.slug}`}
+                      className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
                     >
                       Ler mais
                       <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,13 +237,13 @@ export default function BlogPage() {
       </div>
 
       {/* Newsletter Section */}
-      <div className="bg-indigo-600">
+      <div className="bg-green-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-white">
               Fique por dentro das novidades
             </h2>
-            <p className="mt-4 text-xl text-indigo-100">
+            <p className="mt-4 text-xl text-green-100">
               Receba nossos artigos mais recentes diretamente no seu e-mail.
             </p>
             <div className="mt-8 max-w-md mx-auto">
@@ -255,9 +251,9 @@ export default function BlogPage() {
                 <input
                   type="email"
                   placeholder="Seu e-mail"
-                  className="flex-1 px-4 py-3 rounded-md border-0 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-indigo-300"
+                  className="flex-1 px-4 py-3 rounded-md border-0 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-300"
                 />
-                <button className="px-6 py-3 bg-white text-indigo-600 font-medium rounded-md hover:bg-gray-50 transition-colors">
+                <button className="px-6 py-3 bg-white text-green-600 font-medium rounded-md hover:bg-gray-50 transition-colors">
                   Inscrever-se
                 </button>
               </div>
@@ -271,8 +267,8 @@ export default function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
               <p className="mt-4 text-gray-600">
                 Conectando pessoas com profissionais de psicologia para uma vida mais saudável e equilibrada.
@@ -281,24 +277,24 @@ export default function BlogPage() {
             <div>
               <h4 className="font-semibold mb-4">Blog</h4>
               <ul className="space-y-2">
-                <li><Link href="/blog" className="text-gray-600 hover:text-indigo-600">Todos os artigos</Link></li>
-                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-indigo-600">Saúde Mental</Link></li>
-                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-indigo-600">Bem-estar</Link></li>
-                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-indigo-600">Família</Link></li>
+                <li><Link href="/blog" className="text-gray-600 hover:text-green-600">Todos os artigos</Link></li>
+                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-green-600">Saúde Mental</Link></li>
+                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-green-600">Bem-estar</Link></li>
+                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-green-600">Família</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Contato</h4>
               <ul className="space-y-2">
-                <li><Link href="#" className="text-gray-600 hover:text-indigo-600">Sobre</Link></li>
-                <li><Link href="#" className="text-gray-600 hover:text-indigo-600">Contato</Link></li>
-                <li><Link href="/psicologos" className="text-gray-600 hover:text-indigo-600">Psicólogos</Link></li>
+                <li><Link href="#" className="text-gray-600 hover:text-green-600">Sobre</Link></li>
+                <li><Link href="#" className="text-gray-600 hover:text-green-600">Contato</Link></li>
+                <li><Link href="/psicologos" className="text-gray-600 hover:text-green-600">OASIS da Psicologia</Link></li>
               </ul>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-200">
             <p className="text-center text-gray-500">
-              © 2024 Psicoasis. Todos os direitos reservados.
+              © 2024 OASIS da Superdotação. Todos os direitos reservados.
             </p>
           </div>
         </div>

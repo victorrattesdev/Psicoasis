@@ -8,25 +8,25 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/" className="text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/" className="text-green-600 px-3 py-2 rounded-md text-sm font-medium">
                   Início
                 </Link>
-                <Link href="/psicologos" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Psicólogos
+                <Link href="/psicologos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  OASIS da Psicologia
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Serviços
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Avaliação Neuropsicológica
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sobre
+                <Link href="/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Estudos do OASIS
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Contato
                 </Link>
               </div>
@@ -34,19 +34,19 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login" 
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro" 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Registrar
               </Link>
             </div>
             <div className="md:hidden">
-              <button className="text-gray-700 hover:text-indigo-600">
+              <button className="text-gray-700 hover:text-green-600">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -62,11 +62,11 @@ export default function Home() {
           {/* Main Photo Section */}
           <div className="order-2 lg:order-1">
             <div className="relative">
-              <div className="aspect-[4/3] bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="aspect-[4/3] bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-32 h-32 bg-indigo-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <svg className="w-16 h-16 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-32 h-32 bg-green-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -76,7 +76,7 @@ export default function Home() {
               </div>
               {/* Decorative elements */}
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-purple-200 rounded-full opacity-50"></div>
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-indigo-200 rounded-full opacity-50"></div>
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-green-200 rounded-full opacity-50"></div>
             </div>
           </div>
 
@@ -85,8 +85,8 @@ export default function Home() {
             <div className="max-w-lg">
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                 Bem-vindo ao{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-                  Psicoasis
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+                  OASIS da Superdotação
                 </span>
               </h1>
               
@@ -111,11 +111,11 @@ export default function Home() {
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link 
                   href="/psicologos"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl text-center"
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl text-center"
                 >
                   Encontrar Psicólogos
                 </Link>
-                <button className="border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200">
+                <button className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200">
                   Saiba Mais
                 </button>
               </div>
@@ -126,15 +126,15 @@ export default function Home() {
         {/* Quick Stats Section */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-3xl font-bold text-indigo-600 mb-2">50+</div>
+            <div className="text-3xl font-bold text-green-600 mb-2">50+</div>
             <div className="text-gray-600">Psicólogos Licenciados</div>
           </div>
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-3xl font-bold text-indigo-600 mb-2">1000+</div>
+            <div className="text-3xl font-bold text-green-600 mb-2">1000+</div>
             <div className="text-gray-600">Pacientes Atendidos</div>
           </div>
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-3xl font-bold text-indigo-600 mb-2">24/7</div>
+            <div className="text-3xl font-bold text-green-600 mb-2">24/7</div>
             <div className="text-gray-600">Suporte Disponível</div>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold text-indigo-400 mb-4">Psicoasis</h3>
+              <h3 className="text-2xl font-bold text-green-400 mb-4">OASIS da Superdotação</h3>
               <p className="text-gray-400">
                 Seu santuário digital para bem-estar mental e apoio psicológico.
               </p>
@@ -179,7 +179,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Psicoasis. Todos os direitos reservados.</p>
+            <p>&copy; 2024 OASIS da Superdotação. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

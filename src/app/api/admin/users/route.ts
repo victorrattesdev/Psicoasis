@@ -29,7 +29,8 @@ export async function GET() {
         lastLogin: '',
         profile: t.profile ?? {},
         crp: (t.profile as any)?.crp,
-        especialidades: Array.isArray((t.profile as any)?.especialidades) ? (t.profile as any).especialidades : []
+        especialidades: Array.isArray((t.profile as any)?.especialidades) ? (t.profile as any).especialidades : [],
+        canPostBlog: t.canPostBlog
       }))
     ];
 

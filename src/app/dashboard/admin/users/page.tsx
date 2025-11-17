@@ -17,6 +17,7 @@ type NormalizedUser = {
   crp?: string;
   especialidades?: string[];
   profile?: any;
+  canPostBlog?: boolean;
 };
 
 export default function AdminUsersPage() {
@@ -113,6 +114,21 @@ export default function AdminUsersPage() {
       .catch(() => alert('Falha ao atualizar papel do usuário.'));
   };
 
+  const handleToggleBlogAuth = async (therapistId: string, currentStatus: boolean) => {
+    try {
+      const method = currentStatus ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/admin/therapists/${therapistId}/authorize-blog`, { method });
+      if (!res.ok) throw new Error('toggle_failed');
+      setUsers(prev => prev.map(u => 
+        u.id === therapistId && u.type === 'profissional' 
+          ? { ...u, canPostBlog: !currentStatus } 
+          : u
+      ));
+    } catch {
+      alert('Falha ao atualizar autorização de blog.');
+    }
+  };
+
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setShowUserModal(true);
@@ -174,7 +190,7 @@ export default function AdminUsersPage() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link href="/" className="text-2xl font-bold text-indigo-600">
-                  Psicoasis
+                  OASIS da Superdotação
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
@@ -405,6 +421,14 @@ export default function AdminUsersPage() {
                           <button className="text-gray-600 hover:text-gray-900" onClick={() => openEditModal(user)}>
                             Editar
                           </button>
+                          {user.type === "profissional" && (
+                            <button
+                              onClick={() => handleToggleBlogAuth(user.id, user.canPostBlog || false)}
+                              className={`${user.canPostBlog ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+                            >
+                              {user.canPostBlog ? "Revogar Blog" : "Autorizar Blog"}
+                            </button>
+                          )}
                           {user.role !== "ADMIN" && (
                             <>
                               <button

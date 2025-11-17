@@ -68,20 +68,20 @@ export default function EsqueciSenhaPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold text-indigo-600">
-                  Psicoasis
+                <Link href="/" className="text-2xl font-bold text-green-600">
+                  OASIS da Superdotação
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
                 <Link 
                   href="/login" 
-                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Entrar
                 </Link>
                 <Link 
                   href="/registro" 
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Registrar
                 </Link>
@@ -116,7 +116,7 @@ export default function EsqueciSenhaPage() {
               <div className="space-y-3">
                 <Link
                   href="/login"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
                 >
                   Voltar ao Login
                 </Link>
@@ -126,7 +126,7 @@ export default function EsqueciSenhaPage() {
                     setIsSubmitted(false);
                     setFormData({ email: "", tipoUsuario: "paciente" });
                   }}
-                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
                 >
                   Tentar Novamente
                 </button>
@@ -145,20 +145,20 @@ export default function EsqueciSenhaPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login" 
-                className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro" 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Registrar
               </Link>
@@ -170,8 +170,8 @@ export default function EsqueciSenhaPage() {
       {/* Main Content */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </div>
@@ -195,7 +195,7 @@ export default function EsqueciSenhaPage() {
               <div className="grid grid-cols-2 gap-3">
                 <label className={`relative flex cursor-pointer rounded-lg p-4 focus:outline-none ${
                   formData.tipoUsuario === 'paciente' 
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50' 
+                    ? 'ring-2 ring-green-500 bg-green-50' 
                     : 'ring-1 ring-gray-300 bg-white'
                 }`}>
                   <input
@@ -207,8 +207,8 @@ export default function EsqueciSenhaPage() {
                     className="sr-only"
                   />
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                      <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -220,7 +220,7 @@ export default function EsqueciSenhaPage() {
 
                 <label className={`relative flex cursor-pointer rounded-lg p-4 focus:outline-none ${
                   formData.tipoUsuario === 'profissional' 
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50' 
+                    ? 'ring-2 ring-green-500 bg-green-50' 
                     : 'ring-1 ring-gray-300 bg-white'
                 }`}>
                   <input
@@ -257,7 +257,7 @@ export default function EsqueciSenhaPage() {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="seu@email.com"
@@ -270,7 +270,7 @@ export default function EsqueciSenhaPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {isSubmitting ? (
                   <div className="flex items-center">
@@ -291,7 +291,7 @@ export default function EsqueciSenhaPage() {
           <div className="mt-6 text-center">
             <Link 
               href="/login" 
-              className="text-sm text-indigo-600 hover:text-indigo-500"
+              className="text-sm text-green-600 hover:text-green-500"
             >
               ← Voltar ao login
             </Link>

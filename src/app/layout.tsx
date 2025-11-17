@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Psicoasis - Seu Santuário Digital para Bem-estar Mental",
+  title: "OASIS da Superdotação - Seu Santuário Digital para Bem-estar Mental",
   description: "Plataforma digital para conectar pacientes e psicólogos licenciados. Apoio psicológico profissional com sessões online e presenciais.",
 };
 

@@ -79,25 +79,25 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="/" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Início
                 </Link>
-                <Link href="/psicologos" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Psicólogos
+                <Link href="/psicologos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  OASIS da Psicologia
                 </Link>
-                <Link href="/blog" className="text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Blog
+                <Link href="/blog" className="text-green-600 px-3 py-2 rounded-md text-sm font-medium">
+                  Estudos do OASIS
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sobre
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Avaliação Neuropsicológica
                 </Link>
-                <Link href="#" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Contato
                 </Link>
               </div>
@@ -105,13 +105,13 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro"
-                className="text-indigo-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-50 transition-colors"
+                className="text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors"
               >
                 Cadastrar
               </Link>
@@ -138,7 +138,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
                   <Link href="/blog" className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700">
-                    Blog
+                    Estudos do OASIS
                   </Link>
                 </div>
               </li>
@@ -162,7 +162,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                 {post.category}
               </span>
             </div>
@@ -177,8 +177,8 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
             
             <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                  <span className="text-sm font-medium text-indigo-600">
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                  <span className="text-sm font-medium text-green-600">
                     {post.author.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
@@ -236,7 +236,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
                   Adolescentes
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -247,7 +247,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/2"
-                  className="inline-flex items-center text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
                   Bem-estar
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -277,7 +277,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/3"
-                  className="inline-flex items-center text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +296,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
                   Família
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -307,7 +307,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/4"
-                  className="inline-flex items-center text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,8 +325,8 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
               <p className="mt-4 text-gray-600">
                 Conectando pessoas com profissionais de psicologia para uma vida mais saudável e equilibrada.
@@ -335,24 +335,24 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
             <div>
               <h4 className="font-semibold mb-4">Blog</h4>
               <ul className="space-y-2">
-                <li><Link href="/blog" className="text-gray-600 hover:text-indigo-600">Todos os artigos</Link></li>
-                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-indigo-600">Saúde Mental</Link></li>
-                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-indigo-600">Bem-estar</Link></li>
-                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-indigo-600">Família</Link></li>
+                <li><Link href="/blog" className="text-gray-600 hover:text-green-600">Todos os artigos</Link></li>
+                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-green-600">Saúde Mental</Link></li>
+                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-green-600">Bem-estar</Link></li>
+                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-green-600">Família</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Contato</h4>
               <ul className="space-y-2">
-                <li><Link href="#" className="text-gray-600 hover:text-indigo-600">Sobre</Link></li>
-                <li><Link href="#" className="text-gray-600 hover:text-indigo-600">Contato</Link></li>
-                <li><Link href="/psicologos" className="text-gray-600 hover:text-indigo-600">Psicólogos</Link></li>
+                <li><Link href="#" className="text-gray-600 hover:text-green-600">Sobre</Link></li>
+                <li><Link href="#" className="text-gray-600 hover:text-green-600">Contato</Link></li>
+                <li><Link href="/psicologos" className="text-gray-600 hover:text-green-600">OASIS da Psicologia</Link></li>
               </ul>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-200">
             <p className="text-center text-gray-500">
-              © 2024 Psicoasis. Todos os direitos reservados.
+              © 2024 OASIS da Superdotação. Todos os direitos reservados.
             </p>
           </div>
         </div>

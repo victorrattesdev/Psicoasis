@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -22,7 +22,7 @@ model User {
   // Relations
   sessions  Session[]
   messages  Message[]
-  posts     Post[]
+  posts     Post[]    @relation("UserPosts")
   
   @@map("users")
 }
@@ -34,12 +34,16 @@ model Therapist {
   license     String?
   specialties Json
   bio         String?
+  photoUrl    String?
+  approved    Boolean  @default(false)
+  canPostBlog Boolean  @default(false) @map("canPost")
   profile     Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   // Relations
   sessions    Session[]
+  blogPosts   Post[]    @relation("TherapistPosts")
   
   @@map("therapists")
 }
@@ -122,16 +126,24 @@ model Blog {
 model Post {
   id          String   @id @default(cuid())
   title       String
+  slug        String   @unique
   content     String
   excerpt     String?
+  coverImage  String?
   published   Boolean  @default(false)
   publishedAt DateTime?
+  metaTitle       String?
+  metaDescription String?
+  keywords        String?
+  category        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   // Relations
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id])
+  authorUserId      String?
+  authorTherapistId String?
+  authorUser        User?       @relation("UserPosts", fields: [authorUserId], references: [id])
+  authorTherapist   Therapist?  @relation("TherapistPosts", fields: [authorTherapistId], references: [id])
   blogId      String
   blog        Blog     @relation(fields: [blogId], references: [id])
   

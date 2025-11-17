@@ -17,7 +17,7 @@ export async function POST() {
       await prisma.user.create({
         data: {
           email: ADMIN_EMAIL,
-          name: 'Admin Psicoasis',
+          name: 'Admin OASIS da Superdotação',
           role: 'ADMIN'
         }
       });

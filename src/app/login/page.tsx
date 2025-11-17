@@ -23,7 +23,9 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.type === 'paciente') {
+      if (user.role === 'ADMIN') {
+        router.push('/dashboard/admin');
+      } else if (user.type === 'paciente') {
         router.push('/dashboard/paciente');
       } else {
         router.push('/dashboard/profissional');
@@ -80,11 +82,9 @@ export default function LoginPage() {
       
       if (success) {
         // Redirect will happen automatically via useEffect
-        if (formData.tipoUsuario === "paciente") {
-          router.push('/dashboard/paciente');
-        } else {
-          router.push('/dashboard/profissional');
-        }
+        if (user?.role === 'ADMIN') router.push('/dashboard/admin');
+        else if (formData.tipoUsuario === "paciente") router.push('/dashboard/paciente');
+        else router.push('/dashboard/profissional');
       } else {
         setErrors({ 
           email: "Email ou senha incorretos, ou tipo de usuário não corresponde" 
@@ -118,20 +118,20 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                Psicoasis
+              <Link href="/" className="text-2xl font-bold text-green-600">
+                OASIS da Superdotação
               </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Link 
                 href="/login" 
-                className="text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-green-600 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Entrar
               </Link>
               <Link 
                 href="/registro" 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Registrar
               </Link>
@@ -143,8 +143,8 @@ export default function LoginPage() {
       {/* Main Content */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
             </svg>
           </div>
@@ -168,7 +168,7 @@ export default function LoginPage() {
               <div className="grid grid-cols-2 gap-3">
                 <label className={`relative flex cursor-pointer rounded-lg p-4 focus:outline-none ${
                   formData.tipoUsuario === 'paciente' 
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50' 
+                    ? 'ring-2 ring-green-500 bg-green-50' 
                     : 'ring-1 ring-gray-300 bg-white'
                 }`}>
                   <input
@@ -180,8 +180,8 @@ export default function LoginPage() {
                     className="sr-only"
                   />
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                      <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -194,7 +194,7 @@ export default function LoginPage() {
 
                 <label className={`relative flex cursor-pointer rounded-lg p-4 focus:outline-none ${
                   formData.tipoUsuario === 'profissional' 
-                    ? 'ring-2 ring-indigo-500 bg-indigo-50' 
+                    ? 'ring-2 ring-green-500 bg-green-50' 
                     : 'ring-1 ring-gray-300 bg-white'
                 }`}>
                   <input
@@ -232,7 +232,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="seu@email.com"
@@ -253,7 +253,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   value={formData.senha}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`w-full px-3 py-2 pr-10 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                     errors.senha ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Sua senha"
@@ -287,7 +287,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={formData.lembrarMe}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="lembrarMe" className="ml-2 block text-sm text-gray-700">
                   Lembrar de mim
@@ -295,7 +295,7 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <Link href="/esqueci-senha" className="font-medium text-indigo-600 hover:text-indigo-500">
+                <Link href="/esqueci-senha" className="font-medium text-green-600 hover:text-green-500">
                   Esqueceu sua senha?
                 </Link>
               </div>
@@ -306,7 +306,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {isSubmitting ? (
                   <div className="flex items-center">
@@ -361,7 +361,7 @@ export default function LoginPage() {
               Não tem uma conta?{" "}
               <Link 
                 href="/registro" 
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-green-600 hover:text-green-500"
               >
                 Registre-se aqui
               </Link>

@@ -100,7 +100,7 @@ let sampleUsers: User[] = [
   },
   {
     id: '5',
-    name: 'Admin Psicoasis',
+    name: 'Admin OASIS da Superdotação',
     email: 'admin@admin.com',
     type: 'profissional',
     role: 'ADMIN',
@@ -108,7 +108,7 @@ let sampleUsers: User[] = [
     especialidades: ['Administração', 'Gestão'],
     formacao: 'Psicologia - USP',
     experiencia: '15 anos',
-    bio: 'Administrador do sistema Psicoasis',
+    bio: 'Administrador do OASIS da Superdotação',
     valorConsulta: '0',
     aceitaOnline: false,
     aceitaPresencial: false,
@@ -142,11 +142,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
       const data = await res.json();
-      // Prevent admin from standard flow safeguard (in case)
-      if (data?.user?.role === 'ADMIN') {
-        setIsLoading(false);
-        return false;
-      }
       setUser(data.user);
       localStorage.setItem('psicoasis_user', JSON.stringify(data.user));
       setIsLoading(false);
