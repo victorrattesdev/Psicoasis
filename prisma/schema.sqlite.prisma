@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Schema alternativo para SQLite (mais fácil para desenvolvimento)
+// Para usar, renomeie este arquivo para schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -176,3 +176,7 @@ model Post {
   @@index([authorTherapistId])
   @@index([blogId])
 }
+
+
+
+

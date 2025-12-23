@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { fromJsonString } from '@/lib/json-utils';
 
 export async function GET() {
   try {
-    // Fetch minimal fields, filter approved
+    // Fetch all approved therapists
     const therapists = await prisma.therapist.findMany({
       where: { approved: true },
       select: {
@@ -13,17 +14,23 @@ export async function GET() {
         bio: true,
         specialties: true,
         photoUrl: true,
+      },
+      orderBy: {
+        name: 'asc' // Order alphabetically by name
       }
     });
 
-    // Shuffle in-memory to ensure random order on each request
-    for (let i = therapists.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [therapists[i], therapists[j]] = [therapists[j], therapists[i]];
-    }
+    console.log(`📊 Found ${therapists.length} approved therapist(s)`);
 
-    return NextResponse.json({ therapists });
+    // Parse JSON fields and format response
+    const formatted = therapists.map(t => ({
+      ...t,
+      specialties: fromJsonString(t.specialties as string) ?? []
+    }));
+
+    return NextResponse.json({ therapists: formatted });
   } catch (error) {
+    console.error('Error loading approved therapists:', error);
     return NextResponse.json({ error: 'Failed to load therapists' }, { status: 500 });
   }
 }

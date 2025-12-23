@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { fromJsonString, toJsonString } from '@/lib/json-utils';
 
 // Helper to locate record and infer type
 async function findUserOrTherapistById(id: string) {
@@ -17,10 +18,28 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (found.type === 'paciente') {
       const u = found.record as any;
-      return NextResponse.json({ id: u.id, name: u.name ?? '', email: u.email, type: 'paciente', role: u.role, createdAt: u.createdAt, updatedAt: u.updatedAt, profile: u.profile ?? {} });
+      return NextResponse.json({ 
+        id: u.id, 
+        name: u.name ?? '', 
+        email: u.email, 
+        type: 'paciente', 
+        role: u.role, 
+        createdAt: u.createdAt, 
+        updatedAt: u.updatedAt, 
+        profile: fromJsonString(u.profile) ?? {} 
+      });
     }
     const t = found.record as any;
-    return NextResponse.json({ id: t.id, name: t.name, email: t.email, type: 'profissional', role: 'USER', createdAt: t.createdAt, updatedAt: t.updatedAt, profile: t.profile ?? {} });
+    return NextResponse.json({ 
+      id: t.id, 
+      name: t.name, 
+      email: t.email, 
+      type: 'profissional', 
+      role: 'USER', 
+      createdAt: t.createdAt, 
+      updatedAt: t.updatedAt, 
+      profile: fromJsonString(t.profile) ?? {} 
+    });
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
@@ -42,10 +61,17 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           name: name ?? undefined,
           email: email ?? undefined,
           role: role ?? undefined,
-          profile: profile ?? undefined,
+          profile: profile ? toJsonString(profile) : undefined,
         },
       });
-      return NextResponse.json({ id: updated.id, name: updated.name ?? '', email: updated.email, type: 'paciente', role: updated.role, profile: updated.profile ?? {} });
+      return NextResponse.json({ 
+        id: updated.id, 
+        name: updated.name ?? '', 
+        email: updated.email, 
+        type: 'paciente', 
+        role: updated.role, 
+        profile: fromJsonString(updated.profile as string) ?? {} 
+      });
     }
 
     // Therapist: update name/email only (no role)
@@ -54,10 +80,17 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       data: {
         name: name ?? undefined,
         email: email ?? undefined,
-        profile: profile ?? undefined,
+        profile: profile ? toJsonString(profile) : undefined,
       },
     });
-    return NextResponse.json({ id: updatedT.id, name: updatedT.name, email: updatedT.email, type: 'profissional', role: 'USER', profile: updatedT.profile ?? {} });
+    return NextResponse.json({ 
+      id: updatedT.id, 
+      name: updatedT.name, 
+      email: updatedT.email, 
+      type: 'profissional', 
+      role: 'USER', 
+      profile: fromJsonString(updatedT.profile as string) ?? {} 
+    });
   } catch (error: any) {
     if (error?.code === 'P2002') {
       return NextResponse.json({ error: 'Email already exists' }, { status: 409 });

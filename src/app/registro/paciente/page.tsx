@@ -107,9 +107,12 @@ export default function PacienteRegistroPage() {
           email: "Este email já está sendo usado. Tente outro email." 
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      const errorMessage = error?.message || "Erro ao criar conta. Tente novamente.";
       setErrors({ 
-        email: "Erro ao criar conta. Tente novamente." 
+        email: errorMessage,
+        form: errorMessage
       });
     } finally {
       setIsSubmitting(false);

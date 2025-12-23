@@ -1,106 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, use } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useRouter } from "next/navigation";
 
-export default function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
+export default function NewBlogPostPage() {
   const { user } = useAuth();
-  const { id: identifier } = use(params); // Can be either ID or slug (from URL)
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     excerpt: "",
     content: "",
     category: "",
     status: "draft",
-    featuredImage: ""
+    coverImage: "",
+    metaTitle: "",
+    metaDescription: "",
+    keywords: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [postSlug, setPostSlug] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  // Check if user is admin
+  if (user?.role !== "ADMIN") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
+          <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
 
   const categories = [
     "Saúde Mental",
     "Adolescentes", 
     "Bem-estar",
     "Família",
+    "Superdotação",
+    "Altas Habilidades",
     "Ansiedade",
     "Depressão",
     "Terapia",
     "Mindfulness"
   ];
-
-  // Load post data
-  useEffect(() => {
-    const loadPost = async () => {
-      if (!identifier) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        console.log('🔍 Loading post with identifier:', identifier);
-        
-        // Try multiple approaches to find the post
-        let post = null;
-        let res = null;
-        
-        // First, try the [id] endpoint (accepts both ID and slug)
-        res = await fetch(`/api/blog/posts/${identifier}`);
-        if (res.ok) {
-          post = await res.json();
-          console.log('✅ Post loaded via [id] endpoint:', { id: post.id, slug: post.slug, title: post.title });
-        } else {
-          console.log('⚠️ [id] endpoint failed, trying [slug]/edit endpoint');
-          // If that fails, try the edit endpoint directly (accepts slug)
-          res = await fetch(`/api/blog/posts/${identifier}/edit`);
-          if (res.ok) {
-            post = await res.json();
-            console.log('✅ Post loaded via [slug]/edit endpoint:', { id: post.id, slug: post.slug, title: post.title });
-          }
-        }
-        
-        if (!post) {
-          const errorData = await res?.json().catch(() => ({ error: 'Erro ao carregar post' }));
-          console.error('❌ Failed to load post:', { status: res?.status, error: errorData });
-          throw new Error(errorData?.error || `Erro ao carregar post (${res?.status || 'unknown'})`);
-        }
-        
-        setPostSlug(post.slug);
-        setFormData({
-          title: post.title || '',
-          excerpt: post.excerpt || '',
-          content: post.content || '',
-          category: post.category || '',
-          status: post.status || (post.published ? 'published' : 'draft'),
-          featuredImage: post.featuredImage || post.coverImage || ''
-        });
-      } catch (error: any) {
-        console.error("❌ Error loading post:", error);
-        alert(error?.message || 'Erro ao carregar post. Tente novamente.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPost();
-  }, [identifier]);
-
-  // Check if user is admin - after all hooks
-  if (user?.role !== "ADMIN") {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
-            <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -113,75 +59,47 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
 
     try {
-      // First, get the post to find its slug (using identifier which can be ID or slug)
-      console.log('🔍 Fetching post for update with identifier:', identifier);
-      const postRes = await fetch(`/api/blog/posts/${identifier}`);
-      if (!postRes.ok) {
-        const errorData = await postRes.json().catch(() => ({ error: 'Post not found' }));
-        console.error('❌ Failed to fetch post:', errorData);
-        throw new Error(errorData.error || 'Post não encontrado');
-      }
-      const post = await postRes.json();
-      console.log('✅ Post fetched for update:', { id: post.id, slug: post.slug });
-
-      // Validate form data
-      if (!formData.title || !formData.content) {
-        alert('Título e conteúdo são obrigatórios');
-        return;
-      }
-
-      // Update the post using slug
-      // Admin users should send userId (admin is a User in the database, even if type is 'profissional' in frontend)
-      const updateRes = await fetch(`/api/blog/posts/${post.slug}/edit`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch('/api/blog/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          userId: user?.role === 'ADMIN' ? user.id : (user?.type === 'paciente' ? user.id : null),
-          therapistId: user?.role !== 'ADMIN' && user?.type === 'profissional' ? user.id : null,
-          title: formData.title.trim(),
-          content: formData.content.trim(),
-          excerpt: formData.excerpt.trim() || null,
-          coverImage: formData.featuredImage.trim() || null,
-          category: formData.category.trim() || null,
-          published: formData.status === 'published'
-        })
+          userId: user?.type === 'paciente' ? user.id : null,
+          therapistId: user?.type === 'profissional' ? user.id : null,
+          title: formData.title,
+          content: formData.content,
+          excerpt: formData.excerpt || null,
+          coverImage: formData.coverImage || null,
+          category: formData.category || null,
+          metaTitle: formData.metaTitle || null,
+          metaDescription: formData.metaDescription || null,
+          keywords: formData.keywords || null,
+          published: formData.status === "published"
+        }),
       });
 
-      if (!updateRes.ok) {
-        const errorData = await updateRes.json().catch(() => ({ error: 'Erro desconhecido' }));
-        console.error('Update failed:', { status: updateRes.status, error: errorData });
-        throw new Error(errorData.error || `Erro ao atualizar post (${updateRes.status})`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error || 'Erro ao criar post';
+        console.error('API Error:', errorMsg, data);
+        throw new Error(errorMsg);
       }
 
-      const result = await updateRes.json();
-      console.log('Post updated successfully:', result);
-
-      // Show success message and redirect
-      alert('Post atualizado com sucesso!');
-      window.location.href = "/dashboard/admin/blog";
+      // Redirect to blog management page
+      router.push("/dashboard/admin/blog");
     } catch (error: any) {
-      console.error("Error updating blog post:", error);
-      const errorMessage = error?.message || 'Erro ao atualizar post. Tente novamente.';
-      alert(errorMessage);
+      console.error("Error creating blog post:", error);
+      const errorMessage = error.message || "Erro ao criar post. Verifique se todos os campos obrigatórios estão preenchidos e tente novamente.";
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando post...</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute>
@@ -199,11 +117,6 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 <Link href="/dashboard/admin/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
                   ← Voltar
                 </Link>
-                {postSlug && (
-                  <Link href={`/blog/${postSlug}`} className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Ver Post
-                  </Link>
-                )}
                 <span className="text-sm text-gray-500">Admin: {user?.name}</span>
               </div>
             </div>
@@ -213,9 +126,15 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Editar Post</h1>
-            <p className="mt-2 text-gray-600">Edite as informações do post</p>
+            <h1 className="text-3xl font-bold text-gray-900">Novo Post</h1>
+            <p className="mt-2 text-gray-600">Crie um novo artigo para o blog</p>
           </div>
+
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -275,20 +194,23 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                   </select>
                 </div>
 
-                {/* Featured Image */}
+                {/* Cover Image */}
                 <div>
-                  <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 mb-2">
-                    Imagem Destacada
+                  <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 mb-2">
+                    Imagem de Capa (URL)
                   </label>
                   <input
                     type="url"
-                    name="featuredImage"
-                    id="featuredImage"
-                    value={formData.featuredImage}
+                    name="coverImage"
+                    id="coverImage"
+                    value={formData.coverImage}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                    placeholder="URL da imagem (opcional)"
+                    placeholder="https://exemplo.com/imagem.jpg"
                   />
+                  <p className="mt-1 text-sm text-gray-500">
+                    URL da imagem que será exibida como capa do post
+                  </p>
                 </div>
 
                 {/* Status */}
@@ -307,6 +229,61 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                     <option value="published">Publicado</option>
                   </select>
                 </div>
+
+                {/* SEO Fields */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">SEO (Opcional)</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                        Meta Título
+                      </label>
+                      <input
+                        type="text"
+                        name="metaTitle"
+                        id="metaTitle"
+                        value={formData.metaTitle}
+                        onChange={handleInputChange}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Título para SEO (se vazio, usa o título do post)"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                        Meta Descrição
+                      </label>
+                      <textarea
+                        name="metaDescription"
+                        id="metaDescription"
+                        rows={2}
+                        value={formData.metaDescription}
+                        onChange={handleInputChange}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Descrição para SEO (se vazio, usa o resumo do post)"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 mb-2">
+                        Palavras-chave
+                      </label>
+                      <input
+                        type="text"
+                        name="keywords"
+                        id="keywords"
+                        value={formData.keywords}
+                        onChange={handleInputChange}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="palavra1, palavra2, palavra3"
+                      />
+                      <p className="mt-1 text-sm text-gray-500">
+                        Separe as palavras-chave por vírgula
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -322,7 +299,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 required
                 value={formData.content}
                 onChange={handleInputChange}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
                 placeholder="Escreva o conteúdo do seu post aqui. Você pode usar HTML básico para formatação."
               />
               <p className="mt-2 text-sm text-gray-500">
@@ -337,9 +314,9 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">{formData.title}</h2>
                   <p className="text-gray-600 mb-4">{formData.excerpt}</p>
-                  {formData.featuredImage && (
+                  {formData.coverImage && (
                     <img 
-                      src={formData.featuredImage} 
+                      src={formData.coverImage} 
                       alt="Preview" 
                       className="w-full h-48 object-cover rounded-lg mb-4"
                       onError={(e) => {
@@ -368,7 +345,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                {isSubmitting ? "Criando..." : "Criar Post"}
               </button>
             </div>
           </form>
@@ -377,10 +354,4 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
     </ProtectedRoute>
   );
 }
-
-
-
-
-
-
 

@@ -10,15 +10,25 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<{ users: number; therapists: number; posts: number; sessions: number; sessionsCompleted: number; sessionsScheduled: number } | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      setIsLoadingStats(true);
       try {
         const res = await fetch('/api/stats/admin', { cache: 'no-store' });
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.error('Failed to load stats:', res.status);
+          return;
+        }
         const data = await res.json();
+        console.log('Stats loaded:', data);
         setStats(data);
-      } catch {}
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
     };
     load();
   }, []);
@@ -87,7 +97,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Usuários</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.users ?? 0}</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {isLoadingStats ? '...' : (stats?.users ?? 0)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -101,7 +113,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Posts do Blog</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.posts ?? 0}</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {isLoadingStats ? '...' : (stats?.posts ?? 0)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -115,7 +129,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Psicólogos</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.therapists ?? 0}</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {isLoadingStats ? '...' : (stats?.therapists ?? 0)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -129,7 +145,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Sessões</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.sessions ?? 0}</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {isLoadingStats ? '...' : (stats?.sessions ?? 0)}
+                  </p>
                 </div>
               </div>
             </div>

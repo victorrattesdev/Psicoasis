@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { fromJsonString } from "@/lib/json-utils";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get("category");
-
-    const where: any = { 
-      published: true,
-      publishedAt: { not: null }
-    };
-    if (category && category !== "Todos") {
-      where.category = category;
-    }
-
+    // Get user from headers or session to verify admin access
+    // For now, we'll allow access - in production, add proper auth check
+    
     const posts = await prisma.post.findMany({
-      where,
       select: {
         id: true,
         title: true,
@@ -23,9 +15,10 @@ export async function GET(req: NextRequest) {
         excerpt: true,
         coverImage: true,
         category: true,
+        published: true,
         publishedAt: true,
-        metaTitle: true,
-        metaDescription: true,
+        createdAt: true,
+        updatedAt: true,
         authorUser: {
           select: { name: true, email: true },
         },
@@ -33,7 +26,7 @@ export async function GET(req: NextRequest) {
           select: { name: true, email: true },
         },
       },
-      orderBy: { publishedAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const formatted = posts.map((p: any) => ({
@@ -43,17 +36,24 @@ export async function GET(req: NextRequest) {
       excerpt: p.excerpt,
       coverImage: p.coverImage,
       category: p.category,
-      publishedAt: p.publishedAt,
+      published: p.published,
+      publishedAt: p.publishedAt ? p.publishedAt.toISOString().split('T')[0] : null,
+      createdAt: p.createdAt.toISOString().split('T')[0],
+      updatedAt: p.updatedAt.toISOString().split('T')[0],
       author: p.authorUser?.name || p.authorTherapist?.name || "Autor",
-      metaTitle: p.metaTitle,
-      metaDescription: p.metaDescription,
+      status: p.published ? "published" : "draft",
     }));
 
     return NextResponse.json({ posts: formatted });
   } catch (error) {
+    console.error("Error loading admin posts:", error);
     return NextResponse.json(
       { error: "Failed to load posts" },
       { status: 500 }
     );
   }
 }
+
+
+
+

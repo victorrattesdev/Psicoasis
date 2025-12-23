@@ -17,15 +17,28 @@ export default function PsicologosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedServiceType, setSelectedServiceType] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const res = await fetch('/api/therapists/public', { cache: 'no-store' });
-        if (!res.ok) return;
+        if (!res.ok) {
+          throw new Error('Erro ao carregar psicólogos');
+        }
         const data = await res.json();
-        setTherapists(Array.isArray(data?.therapists) ? data.therapists : []);
-      } catch {}
+        const therapistsList = Array.isArray(data?.therapists) ? data.therapists : [];
+        setTherapists(therapistsList);
+        console.log(`✅ Carregados ${therapistsList.length} psicólogo(s) aprovado(s)`);
+      } catch (err) {
+        console.error('Erro ao carregar psicólogos:', err);
+        setError('Erro ao carregar psicólogos. Tente novamente mais tarde.');
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, []);
@@ -151,18 +164,26 @@ export default function PsicologosPage() {
 
           {/* Results count */}
           <div className="mt-4 text-sm text-gray-600">
-            {filteredTherapists.length} psicólogo{filteredTherapists.length !== 1 ? 's' : ''} aprovado{filteredTherapists.length !== 1 ? 's' : ''}
-            {(searchTerm || selectedSpecialty || selectedServiceType) && (
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedSpecialty("");
-                  setSelectedServiceType("");
-                }}
-                className="ml-2 text-green-600 hover:text-green-800 underline"
-              >
-                Limpar filtros
-              </button>
+            {isLoading ? (
+              <span>Carregando psicólogos...</span>
+            ) : error ? (
+              <span className="text-red-600">{error}</span>
+            ) : (
+              <>
+                {filteredTherapists.length} psicólogo{filteredTherapists.length !== 1 ? 's' : ''} aprovado{filteredTherapists.length !== 1 ? 's' : ''}
+                {(searchTerm || selectedSpecialty || selectedServiceType) && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedSpecialty("");
+                      setSelectedServiceType("");
+                    }}
+                    className="ml-2 text-green-600 hover:text-green-800 underline"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -170,7 +191,28 @@ export default function PsicologosPage() {
 
       {/* Therapists List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {filteredTherapists.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando psicólogos aprovados...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Erro ao carregar psicólogos</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        ) : filteredTherapists.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

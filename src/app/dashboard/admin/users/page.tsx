@@ -18,6 +18,7 @@ type NormalizedUser = {
   especialidades?: string[];
   profile?: any;
   canPostBlog?: boolean;
+  approved?: boolean;
 };
 
 export default function AdminUsersPage() {
@@ -129,6 +130,24 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleToggleApproval = async (therapistId: string, currentStatus: boolean) => {
+    try {
+      const action = currentStatus ? 'reject' : 'approve';
+      const res = await fetch(`/api/admin/therapists/${therapistId}/${action}`, { 
+        method: 'POST' 
+      });
+      if (!res.ok) throw new Error('toggle_failed');
+      setUsers(prev => prev.map(u => 
+        u.id === therapistId && u.type === 'profissional' 
+          ? { ...u, approved: !currentStatus } 
+          : u
+      ));
+      alert(`Profissional ${!currentStatus ? 'aprovado' : 'rejeitado'} com sucesso!`);
+    } catch {
+      alert('Falha ao atualizar status de aprovação.');
+    }
+  };
+
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setShowUserModal(true);
@@ -171,13 +190,21 @@ export default function AdminUsersPage() {
 
   const getStatusColor = (user: any) => {
     if (user.role === "ADMIN") return "bg-purple-100 text-purple-800";
-    if (user.type === "profissional") return "bg-blue-100 text-blue-800";
+    if (user.type === "profissional") {
+      if (user.approved === false) return "bg-yellow-100 text-yellow-800";
+      if (user.approved === true) return "bg-green-100 text-green-800";
+      return "bg-blue-100 text-blue-800";
+    }
     return "bg-green-100 text-green-800";
   };
 
   const getStatusText = (user: any) => {
     if (user.role === "ADMIN") return "Admin";
-    if (user.type === "profissional") return "Profissional";
+    if (user.type === "profissional") {
+      if (user.approved === false) return "Pendente";
+      if (user.approved === true) return "Aprovado";
+      return "Profissional";
+    }
     return "Paciente";
   };
 
@@ -422,12 +449,21 @@ export default function AdminUsersPage() {
                             Editar
                           </button>
                           {user.type === "profissional" && (
-                            <button
-                              onClick={() => handleToggleBlogAuth(user.id, user.canPostBlog || false)}
-                              className={`${user.canPostBlog ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
-                            >
-                              {user.canPostBlog ? "Revogar Blog" : "Autorizar Blog"}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleToggleApproval(user.id, user.approved || false)}
+                                className={`${user.approved ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                                title={user.approved ? "Rejeitar profissional (não aparecerá na página pública)" : "Aprovar profissional (aparecerá na página OASIS da Psicologia)"}
+                              >
+                                {user.approved ? "Rejeitar" : "Aprovar"}
+                              </button>
+                              <button
+                                onClick={() => handleToggleBlogAuth(user.id, user.canPostBlog || false)}
+                                className={`${user.canPostBlog ? 'text-red-600 hover:text-red-900' : 'text-blue-600 hover:text-blue-900'}`}
+                              >
+                                {user.canPostBlog ? "Revogar Blog" : "Autorizar Blog"}
+                              </button>
+                            </>
                           )}
                           {user.role !== "ADMIN" && (
                             <>

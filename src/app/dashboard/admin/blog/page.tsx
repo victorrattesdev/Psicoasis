@@ -5,59 +5,43 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-// Sample blog posts data - in a real app, this would come from the database
-const samplePosts = [
-  {
-    id: 1,
-    title: "Entendendo a Ansiedade: Guia Completo para Pacientes",
-    excerpt: "A ansiedade é uma resposta natural do nosso corpo, mas quando se torna excessiva, pode impactar significativamente nossa qualidade de vida.",
-    status: "published",
-    publishedAt: "2024-01-15",
-    author: "Dr. Ana Silva",
-    category: "Saúde Mental",
-    views: 1250,
-    likes: 89
-  },
-  {
-    id: 2,
-    title: "Como Identificar Sinais de Depressão em Adolescentes",
-    excerpt: "A adolescência é um período de grandes mudanças e desafios. Reconhecer os sinais de depressão nesta fase é crucial.",
-    status: "published",
-    publishedAt: "2024-01-10",
-    author: "Dr. Carlos Mendes",
-    category: "Adolescentes",
-    views: 980,
-    likes: 67
-  },
-  {
-    id: 3,
-    title: "Técnicas de Mindfulness para Reduzir o Estresse",
-    excerpt: "O mindfulness é uma prática que pode ajudar significativamente na redução do estresse e na melhoria do bem-estar mental.",
-    status: "draft",
-    publishedAt: null,
-    author: "Dra. Maria Santos",
-    category: "Bem-estar",
-    views: 0,
-    likes: 0
-  },
-  {
-    id: 4,
-    title: "A Importância da Terapia Familiar",
-    excerpt: "A terapia familiar pode ser uma ferramenta poderosa para resolver conflitos e fortalecer os laços familiares.",
-    status: "published",
-    publishedAt: "2024-01-01",
-    author: "Dr. João Oliveira",
-    category: "Família",
-    views: 756,
-    likes: 45
-  }
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  category: string | null;
+  published: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: string;
+  status: "published" | "draft";
+}
 
 export default function AdminBlogPage() {
   const { user } = useAuth();
-  const [posts, setPosts] = useState(samplePosts);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const res = await fetch('/api/blog/admin/posts', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setPosts(Array.isArray(data?.posts) ? data.posts : []);
+      } catch (error) {
+        console.error('Error loading posts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPosts();
+  }, []);
 
   // Check if user is admin
   if (user?.role !== "ADMIN") {
@@ -78,24 +62,91 @@ export default function AdminBlogPage() {
     return matchesFilter && matchesSearch;
   });
 
-  const handleDeletePost = (postId: number) => {
-    if (confirm("Tem certeza que deseja excluir este post?")) {
-      setPosts(posts.filter(post => post.id !== postId));
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este post?")) return;
+    
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+      
+      const res = await fetch(`/api/blog/posts/${post.slug}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        setPosts(posts.filter(p => p.id !== postId));
+      } else {
+        alert('Erro ao excluir post');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Erro ao excluir post');
     }
   };
 
-  const handleToggleStatus = (postId: number) => {
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        const newStatus = post.status === "published" ? "draft" : "published";
-        return {
-          ...post,
-          status: newStatus,
-          publishedAt: newStatus === "published" ? new Date().toISOString().split('T')[0] : null
-        };
+  const handleToggleStatus = async (postId: string) => {
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) {
+        alert('Post não encontrado');
+        return;
       }
-      return post;
-    }));
+      
+      const newPublished = !post.published;
+      const action = newPublished ? 'publicar' : 'despublicar';
+      
+      if (!confirm(`Tem certeza que deseja ${action} este post?`)) {
+        return;
+      }
+      
+      // Get the full post content using the edit API (works for both published and draft)
+      const getRes = await fetch(`/api/blog/posts/${post.id}`);
+      let postData;
+      
+      if (!getRes.ok) {
+        // If not found by ID, try by slug using edit endpoint
+        const getResBySlug = await fetch(`/api/blog/posts/${post.slug}/edit`);
+        if (!getResBySlug.ok) {
+          alert('Erro ao carregar post para edição');
+          return;
+        }
+        postData = await getResBySlug.json();
+      } else {
+        postData = await getRes.json();
+      }
+      
+      // Update the post using slug
+      const res = await fetch(`/api/blog/posts/${postData.slug}/edit`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.type === 'paciente' ? user.id : null,
+          therapistId: user?.type === 'profissional' ? user.id : null,
+          title: postData.title || post.title,
+          content: postData.content || '',
+          excerpt: postData.excerpt || post.excerpt || '',
+          coverImage: postData.coverImage || post.coverImage || '',
+          category: postData.category || post.category || '',
+          published: newPublished,
+        }),
+      });
+      
+      if (res.ok) {
+        // Reload posts to get updated data
+        const postsRes = await fetch('/api/blog/admin/posts', { cache: 'no-store' });
+        if (postsRes.ok) {
+          const data = await postsRes.json();
+          setPosts(Array.isArray(data?.posts) ? data.posts : []);
+          alert(`Post ${newPublished ? 'publicado' : 'despublicado'} com sucesso!`);
+        }
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Erro ao atualizar status do post');
+      }
+    } catch (error) {
+      console.error('Error toggling post status:', error);
+      alert('Erro ao atualizar status do post. Tente novamente.');
+    }
   };
 
   return (
@@ -106,18 +157,18 @@ export default function AdminBlogPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold text-indigo-600">
+                <Link href="/" className="text-2xl font-bold text-green-600">
                   OASIS da Superdotação
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
-                <Link href="/dashboard/admin" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/dashboard/admin" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
                   Dashboard
                 </Link>
-                <Link href="/dashboard/admin/users" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/dashboard/admin/users" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
                   Usuários
                 </Link>
-                <Link href="/blog" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
                   Ver Blog
                 </Link>
                 <span className="text-sm text-gray-500">Admin: {user?.name}</span>
@@ -136,7 +187,7 @@ export default function AdminBlogPage() {
               </div>
               <Link
                 href="/dashboard/admin/blog/new"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 Novo Post
               </Link>
@@ -147,8 +198,8 @@ export default function AdminBlogPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex items-center">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
@@ -215,9 +266,9 @@ export default function AdminBlogPage() {
               <div className="flex gap-4">
                 <button
                   onClick={() => setFilter("all")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     filter === "all"
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-green-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -225,9 +276,9 @@ export default function AdminBlogPage() {
                 </button>
                 <button
                   onClick={() => setFilter("published")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     filter === "published"
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-green-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -235,9 +286,9 @@ export default function AdminBlogPage() {
                 </button>
                 <button
                   onClick={() => setFilter("draft")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     filter === "draft"
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-green-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
@@ -257,7 +308,7 @@ export default function AdminBlogPage() {
                     placeholder="Buscar posts..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
               </div>
@@ -265,6 +316,12 @@ export default function AdminBlogPage() {
           </div>
 
           {/* Posts Table */}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando posts...</p>
+            </div>
+          ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -296,8 +353,8 @@ export default function AdminBlogPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                              <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                              <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
                             </div>
@@ -321,32 +378,34 @@ export default function AdminBlogPage() {
                         {post.author}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {post.views}
+                        0
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {post.publishedAt || "Não publicado"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
+                          {post.published && (
+                            <Link
+                              href={`/blog/${post.slug}`}
+                              className="text-green-600 hover:text-green-900"
+                              target="_blank"
+                            >
+                              Ver
+                            </Link>
+                          )}
                           <Link
-                            href={`/blog/${post.id}`}
-                            className="text-indigo-600 hover:text-indigo-900"
-                            target="_blank"
-                          >
-                            Ver
-                          </Link>
-                          <Link
-                            href={`/dashboard/admin/blog/${post.id}/edit`}
+                            href={`/dashboard/admin/blog/${post.slug}/edit`}
                             className="text-gray-600 hover:text-gray-900"
                           >
                             Editar
                           </Link>
                           <button
                             onClick={() => handleToggleStatus(post.id)}
-                            className={`${
+                            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                               post.status === "published"
-                                ? "text-yellow-600 hover:text-yellow-900"
-                                : "text-green-600 hover:text-green-900"
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                                : "bg-green-100 text-green-800 hover:bg-green-200"
                             }`}
                           >
                             {post.status === "published" ? "Despublicar" : "Publicar"}
@@ -365,8 +424,9 @@ export default function AdminBlogPage() {
               </table>
             </div>
           </div>
+          )}
 
-          {filteredPosts.length === 0 && (
+          {!loading && filteredPosts.length === 0 && (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

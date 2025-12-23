@@ -211,11 +211,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         })
       });
+      
       if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('Registration error:', errorData);
         setIsLoading(false);
-        // only email-in-use should map to false for UI email error
-        return res.status === 409 ? false : Promise.reject(new Error('register_failed'));
+        // Return false for email conflicts (409), throw for other errors
+        if (res.status === 409) {
+          return false;
+        }
+        throw new Error(errorData.error || 'Erro ao criar conta');
       }
+      
       const created = await res.json();
       const normalized: User = {
         id: created.id,
@@ -228,9 +235,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('psicoasis_user', JSON.stringify(normalized));
       setIsLoading(false);
       return true;
-    } catch (e) {
+    } catch (e: any) {
+      console.error('Registration exception:', e);
       setIsLoading(false);
-      return false;
+      // Re-throw to allow UI to show error message
+      throw e;
     }
   };
 
