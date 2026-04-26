@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                  placeholder="admin@admin.com"
+                  placeholder="seu@email.com"
                 />
               </div>
             </div>
@@ -140,14 +140,6 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          {/* Admin Credentials Info */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">Credenciais de Administrador:</h3>
-            <p className="text-xs text-blue-700">
-              <strong>Email:</strong> admin@admin.com<br />
-              <strong>Senha:</strong> Creative1@
-            </p>
-          </div>
         </div>
       </div>
       <SiteFooter />
