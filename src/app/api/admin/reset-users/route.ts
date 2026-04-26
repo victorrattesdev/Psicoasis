@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { toJsonString } from '@/lib/json-utils';
+import { requireAdmin } from '@/lib/auth';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(req);
+    if (unauthorized) return unauthorized;
+
     // Delete all non-admin users
     const deletedUsers = await prisma.user.deleteMany({
       where: {

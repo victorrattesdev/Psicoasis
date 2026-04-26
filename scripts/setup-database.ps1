@@ -80,3 +80,5 @@ Write-Host "✨ Configuração concluída!`n" -ForegroundColor Green
 
 
 
+
+

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 import { useState, useEffect } from "react";
 
 // Sample blog post data - in a real app, this would come from the database
@@ -74,52 +75,6 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-green-600">
-                OASIS da Superdotação
-              </Link>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Início
-                </Link>
-                <Link href="/psicologos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  OASIS da Psicologia
-                </Link>
-                <Link href="/blog" className="text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Estudos do OASIS
-                </Link>
-                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Avaliação Neuropsicológica
-                </Link>
-                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Contato
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/login"
-                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-              >
-                Entrar
-              </Link>
-              <Link 
-                href="/registro"
-                className="text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors"
-              >
-                Cadastrar
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -162,7 +117,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#fff4c1] text-[#7a5a00]">
                 {post.category}
               </span>
             </div>
@@ -177,8 +132,8 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
             
             <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                  <span className="text-sm font-medium text-green-600">
+                <div className="h-10 w-10 rounded-full bg-[#fff4c1] flex items-center justify-center mr-3">
+                  <span className="text-sm font-medium text-[#7a5a00]">
                     {post.author.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
@@ -213,7 +168,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <div 
-            className="prose prose-lg max-w-none"
+            className="prose prose-lg max-w-none text-gray-900 prose-p:text-gray-800 prose-li:text-gray-800 prose-headings:text-gray-900"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </div>
@@ -236,7 +191,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff4c1] text-[#7a5a00] mb-2">
                   Adolescentes
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -247,7 +202,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/2"
-                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
+                  className="inline-flex items-center text-[#d4af37] hover:text-[#c9a227] text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +221,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff4c1] text-[#7a5a00] mb-2">
                   Bem-estar
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -277,7 +232,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/3"
-                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
+                  className="inline-flex items-center text-[#d4af37] hover:text-[#c9a227] text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +251,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff4c1] text-[#7a5a00] mb-2">
                   Família
                 </span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -307,7 +262,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
                 </p>
                 <Link
                   href="/blog/4"
-                  className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
+                  className="inline-flex items-center text-[#d4af37] hover:text-[#c9a227] text-sm font-medium"
                 >
                   Ler mais
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,43 +275,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <Link href="/" className="text-2xl font-bold text-green-600">
-                OASIS da Superdotação
-              </Link>
-              <p className="mt-4 text-gray-600">
-                Conectando pessoas com profissionais de psicologia para uma vida mais saudável e equilibrada.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Blog</h4>
-              <ul className="space-y-2">
-                <li><Link href="/blog" className="text-gray-600 hover:text-green-600">Todos os artigos</Link></li>
-                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-green-600">Saúde Mental</Link></li>
-                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-green-600">Bem-estar</Link></li>
-                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-green-600">Família</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contato</h4>
-              <ul className="space-y-2">
-                <li><Link href="#" className="text-gray-600 hover:text-green-600">Sobre</Link></li>
-                <li><Link href="#" className="text-gray-600 hover:text-green-600">Contato</Link></li>
-                <li><Link href="/psicologos" className="text-gray-600 hover:text-green-600">OASIS da Psicologia</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-center text-gray-500">
-              © 2024 OASIS da Superdotação. Todos os direitos reservados.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

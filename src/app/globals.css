@@ -10,6 +10,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-green-50: #dcfce7;
+  --color-green-100: #bbf7d0;
+  --color-green-200: #86efac;
+  --color-green-300: #4ade80;
+  --color-green-400: #22c55e;
+  --color-green-500: #16a34a;
+  --color-green-600: #15803d;
+  --color-green-700: #166534;
+  --color-green-800: #14532d;
+  --color-green-900: #052e16;
+  --color-green-950: #031b0c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +34,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.animated-border {
+  background: linear-gradient(90deg, #f2c94c, #fff4c1, #f2c94c);
+  background-size: 200% 200%;
+  animation: borderShift 3s linear infinite;
+}
+
+@keyframes borderShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }

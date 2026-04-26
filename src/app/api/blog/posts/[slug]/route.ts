@@ -5,8 +5,12 @@ import { prisma } from '@/lib/db';
 // Aceita tanto ID (CUID) quanto slug
 // Se o post estiver publicado, retorna formato público
 // Se não estiver publicado, retorna formato para edição
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const therapistId = searchParams.get("therapistId");
+    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
     const identifier = slug; // O parâmetro pode ser ID ou slug
     
@@ -99,6 +103,31 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
       return NextResponse.json(formatted);
     }
 
+    // If not published, allow only admin or post author
+    let canAccess = false;
+    if (userId) {
+      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "ADMIN" || post.authorUserId === userId) {
+        canAccess = true;
+      }
+    }
+    if (!canAccess && adminEmail) {
+      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
+      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
+        canAccess = true;
+      }
+    }
+    if (!canAccess && therapistId) {
+      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
+      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
+        canAccess = true;
+      }
+    }
+
+    if (!canAccess) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
     // If not published, return edit format (for admin/author editing)
     return NextResponse.json({
       ...post,
@@ -113,27 +142,55 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const therapistId = searchParams.get("therapistId");
+    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
     const identifier = slug; // Pode ser ID ou slug
     
     // Try to find by ID first
     let post = await prisma.post.findUnique({
       where: { id: identifier },
-      select: { id: true }
+      select: { id: true, authorUserId: true, authorTherapistId: true }
     });
 
     // If not found by ID, try by slug
     if (!post) {
       post = await prisma.post.findUnique({
         where: { slug: identifier },
-        select: { id: true }
+        select: { id: true, authorUserId: true, authorTherapistId: true }
       });
     }
 
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    let canDelete = false;
+    if (userId) {
+      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "ADMIN" || post.authorUserId === userId) {
+        canDelete = true;
+      }
+    }
+    if (!canDelete && adminEmail) {
+      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
+      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
+        canDelete = true;
+      }
+    }
+    if (!canDelete && therapistId) {
+      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
+      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
+        canDelete = true;
+      }
+    }
+
+    if (!canDelete) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
 
     await prisma.post.delete({

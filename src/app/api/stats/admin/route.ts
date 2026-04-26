@@ -20,8 +20,12 @@ export async function GET() {
       }),
       // Count therapists
       prisma.therapist.count(),
-      // Count all posts
-      prisma.post.count(),
+      // Count published posts only
+      prisma.post.count({
+        where: {
+          published: true
+        }
+      }),
       // Count all sessions
       prisma.session.count(),
       // Count completed sessions
@@ -54,6 +58,8 @@ export async function GET() {
     );
   }
 }
+
+
 
 
 

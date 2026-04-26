@@ -30,7 +30,15 @@ export default function AdminBlogPage() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const res = await fetch('/api/blog/admin/posts', { cache: 'no-store' });
+        if (!user?.id) return;
+        const params = new URLSearchParams();
+        if (user.role === "ADMIN") {
+          params.set("userId", user.id);
+          if (user.email) params.set("adminEmail", user.email);
+        } else if (user.type === "profissional") {
+          params.set("therapistId", user.id);
+        }
+        const res = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         setPosts(Array.isArray(data?.posts) ? data.posts : []);
@@ -41,7 +49,7 @@ export default function AdminBlogPage() {
       }
     };
     loadPosts();
-  }, []);
+  }, [user?.id, user?.role, user?.type]);
 
   // Check if user is admin
   if (user?.role !== "ADMIN") {
@@ -66,10 +74,18 @@ export default function AdminBlogPage() {
     if (!confirm("Tem certeza que deseja excluir este post?")) return;
     
     try {
+      if (!user?.id) return;
       const post = posts.find(p => p.id === postId);
       if (!post) return;
       
-      const res = await fetch(`/api/blog/posts/${post.slug}`, {
+      const params = new URLSearchParams();
+      if (user.role === "ADMIN") {
+        params.set("userId", user.id);
+        if (user.email) params.set("adminEmail", user.email);
+      } else if (user.type === "profissional") {
+        params.set("therapistId", user.id);
+      }
+      const res = await fetch(`/api/blog/posts/${post.slug}?${params.toString()}`, {
         method: 'DELETE',
       });
       
@@ -86,6 +102,7 @@ export default function AdminBlogPage() {
 
   const handleToggleStatus = async (postId: string) => {
     try {
+      if (!user?.id) return;
       const post = posts.find(p => p.id === postId);
       if (!post) {
         alert('Post não encontrado');
@@ -99,13 +116,21 @@ export default function AdminBlogPage() {
         return;
       }
       
+      const params = new URLSearchParams();
+      if (user.role === "ADMIN") {
+        params.set("userId", user.id);
+        if (user.email) params.set("adminEmail", user.email);
+      } else if (user.type === "profissional") {
+        params.set("therapistId", user.id);
+      }
+
       // Get the full post content using the edit API (works for both published and draft)
-      const getRes = await fetch(`/api/blog/posts/${post.id}`);
+      const getRes = await fetch(`/api/blog/posts/${post.id}?${params.toString()}`);
       let postData;
       
       if (!getRes.ok) {
         // If not found by ID, try by slug using edit endpoint
-        const getResBySlug = await fetch(`/api/blog/posts/${post.slug}/edit`);
+        const getResBySlug = await fetch(`/api/blog/posts/${post.slug}/edit?${params.toString()}`);
         if (!getResBySlug.ok) {
           alert('Erro ao carregar post para edição');
           return;
@@ -120,8 +145,9 @@ export default function AdminBlogPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.type === 'paciente' ? user.id : null,
-          therapistId: user?.type === 'profissional' ? user.id : null,
+          userId: user?.role === 'ADMIN' ? user.id : (user?.type === 'paciente' ? user.id : null),
+          therapistId: user?.role !== 'ADMIN' && user?.type === 'profissional' ? user.id : null,
+          adminEmail: user?.role === 'ADMIN' ? user.email : null,
           title: postData.title || post.title,
           content: postData.content || '',
           excerpt: postData.excerpt || post.excerpt || '',
@@ -133,7 +159,7 @@ export default function AdminBlogPage() {
       
       if (res.ok) {
         // Reload posts to get updated data
-        const postsRes = await fetch('/api/blog/admin/posts', { cache: 'no-store' });
+        const postsRes = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store' });
         if (postsRes.ok) {
           const data = await postsRes.json();
           setPosts(Array.isArray(data?.posts) ? data.posts : []);
@@ -152,31 +178,6 @@ export default function AdminBlogPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold text-green-600">
-                  OASIS da Superdotação
-                </Link>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard/admin" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Dashboard
-                </Link>
-                <Link href="/dashboard/admin/users" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Usuários
-                </Link>
-                <Link href="/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Ver Blog
-                </Link>
-                <span className="text-sm text-gray-500">Admin: {user?.name}</span>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -195,7 +196,7 @@ export default function AdminBlogPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex items-center">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -242,22 +243,6 @@ export default function AdminBlogPage() {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total de Visualizações</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {posts.reduce((sum, post) => sum + post.views, 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Filters and Search */}
@@ -308,7 +293,7 @@ export default function AdminBlogPage() {
                     placeholder="Buscar posts..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
               </div>
@@ -335,9 +320,6 @@ export default function AdminBlogPage() {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Autor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visualizações
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Data
@@ -368,17 +350,14 @@ export default function AdminBlogPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           post.status === "published"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
                         }`}>
                           {post.status === "published" ? "Publicado" : "Rascunho"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {post.author}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        0
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {post.publishedAt || "Não publicado"}

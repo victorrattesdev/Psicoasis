@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
+import { signUserToken } from '@/lib/jwt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,8 +42,17 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const token = await signUserToken({
+        sub: user.id,
+        email: user.email,
+        name: user.name ?? '',
+        type: 'paciente',
+        role: user.role
+      });
+
       return NextResponse.json({
         success: true,
+        token,
         user: {
           id: user.id,
           email: user.email,
@@ -65,8 +75,17 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const token = await signUserToken({
+        sub: therapist.id,
+        email: therapist.email,
+        name: therapist.name,
+        type: 'profissional',
+        role: 'USER'
+      });
+
       return NextResponse.json({
         success: true,
+        token,
         user: {
           id: therapist.id,
           email: therapist.email,

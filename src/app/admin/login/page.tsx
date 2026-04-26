@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function AdminLoginPage() {
   const { loginAdmin } = useAuth();
@@ -149,6 +150,7 @@ export default function AdminLoginPage() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

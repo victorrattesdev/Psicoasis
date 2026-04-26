@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function PacienteRegistroPage() {
   const { register, isAuthenticated, user, isLoading: authLoading } = useAuth();
@@ -39,13 +40,56 @@ export default function PacienteRegistroPage() {
     }
   }, [isAuthenticated, user, router]);
 
+  const formatOnlyLetters = (value: string, maxLength: number) =>
+    value
+      .replace(/[^A-Za-zÀ-ÿ\s]/g, "")
+      .replace(/\s{2,}/g, " ")
+      .slice(0, maxLength);
+
+  const formatOnlyNumbers = (value: string, maxLength: number) =>
+    value.replace(/\D/g, "").slice(0, maxLength);
+
+  const formatDate = (value: string) => {
+    const digits = formatOnlyNumbers(value, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
+  const formatPhone = (value: string) => {
+    const digits = formatOnlyNumbers(value, 11);
+    if (!digits) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const formatCep = (value: string) => {
+    const digits = formatOnlyNumbers(value, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
+    let nextValue = value;
+    if (type !== "checkbox") {
+      if (name === "nome") nextValue = formatOnlyLetters(value, 50);
+      if (name === "telefone") nextValue = formatPhone(value);
+      if (name === "dataNascimento") nextValue = formatDate(value);
+      if (name === "cidade") nextValue = formatOnlyLetters(value, 30);
+      if (name === "estado") nextValue = formatOnlyLetters(value, 2).toUpperCase();
+      if (name === "cep") nextValue = formatCep(value);
+      if (name === "endereco") nextValue = value.slice(0, 60);
+      if (name === "senha") nextValue = value.slice(0, 20);
+      if (name === "confirmarSenha") nextValue = value.slice(0, 20);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : nextValue
     }));
 
     // Clear error when user starts typing
@@ -61,13 +105,28 @@ export default function PacienteRegistroPage() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.nome.trim()) newErrors.nome = "Nome é obrigatório";
+    else if (!/^[A-Za-zÀ-ÿ\s]+$/.test(formData.nome)) newErrors.nome = "Nome deve conter apenas letras";
+    else if (formData.nome.trim().length > 50) newErrors.nome = "Nome deve ter no máximo 50 caracteres";
     if (!formData.email.trim()) newErrors.email = "Email é obrigatório";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email inválido";
     if (!formData.telefone.trim()) newErrors.telefone = "Telefone é obrigatório";
+    else if (formatOnlyNumbers(formData.telefone, 11).length !== 11) newErrors.telefone = "Telefone deve ter 11 números";
     if (!formData.dataNascimento) newErrors.dataNascimento = "Data de nascimento é obrigatória";
+    else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(formData.dataNascimento)) newErrors.dataNascimento = "Data deve estar no formato dd/mm/aaaa";
     if (!formData.genero) newErrors.genero = "Gênero é obrigatório";
+    if (!formData.endereco.trim()) newErrors.endereco = "Endereço é obrigatório";
+    else if (formData.endereco.trim().length > 60) newErrors.endereco = "Endereço deve ter no máximo 60 caracteres";
+    if (!formData.cidade.trim()) newErrors.cidade = "Cidade é obrigatória";
+    else if (!/^[A-Za-zÀ-ÿ\s]+$/.test(formData.cidade)) newErrors.cidade = "Cidade deve conter apenas letras";
+    else if (formData.cidade.trim().length > 30) newErrors.cidade = "Cidade deve ter no máximo 30 caracteres";
+    if (!formData.estado.trim()) newErrors.estado = "Estado é obrigatório";
+    else if (!/^[A-Za-z]{2}$/.test(formData.estado)) newErrors.estado = "Estado deve ter 2 letras";
+    if (!formData.cep.trim()) newErrors.cep = "CEP é obrigatório";
+    else if (formatOnlyNumbers(formData.cep, 8).length !== 8) newErrors.cep = "CEP deve ter 8 números";
     if (!formData.senha) newErrors.senha = "Senha é obrigatória";
-    else if (formData.senha.length < 6) newErrors.senha = "Senha deve ter pelo menos 6 caracteres";
+    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,20}$/.test(formData.senha)) {
+      newErrors.senha = "Senha deve ter 6-20 caracteres, maiúscula, minúscula, número e caractere";
+    }
     if (formData.senha !== formData.confirmarSenha) newErrors.confirmarSenha = "Senhas não coincidem";
     if (!formData.aceitaTermos) newErrors.aceitaTermos = "Você deve aceitar os termos de uso";
     if (!formData.aceitaPrivacidade) newErrors.aceitaPrivacidade = "Você deve aceitar a política de privacidade";
@@ -133,40 +192,13 @@ export default function PacienteRegistroPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-indigo-600">
-                OASIS da Superdotação
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/login" 
-                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Entrar
-              </Link>
-              <Link 
-                href="/registro" 
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Registrar
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-[#fff4c1] rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
@@ -183,7 +215,7 @@ export default function PacienteRegistroPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações Pessoais</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="nome" className="block text-sm font-medium text-gray-900 mb-1">
                     Nome Completo *
                   </label>
                   <input
@@ -192,8 +224,9 @@ export default function PacienteRegistroPage() {
                     name="nome"
                     value={formData.nome}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.nome ? 'border-red-500' : 'border-gray-300'
+                    maxLength={50}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.nome ? 'border-red-500' : 'border-gray-400'
                     }`}
                     placeholder="Seu nome completo"
                   />
@@ -201,7 +234,7 @@ export default function PacienteRegistroPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1">
                     Email *
                   </label>
                   <input
@@ -210,8 +243,9 @@ export default function PacienteRegistroPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    maxLength={254}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.email ? 'border-red-500' : 'border-gray-400'
                     }`}
                     placeholder="seu@email.com"
                   />
@@ -219,7 +253,7 @@ export default function PacienteRegistroPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="telefone" className="block text-sm font-medium text-gray-900 mb-1">
                     Telefone *
                   </label>
                   <input
@@ -228,33 +262,38 @@ export default function PacienteRegistroPage() {
                     name="telefone"
                     value={formData.telefone}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.telefone ? 'border-red-500' : 'border-gray-300'
+                    inputMode="numeric"
+                    maxLength={15}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.telefone ? 'border-red-500' : 'border-gray-400'
                     }`}
-                    placeholder="(11) 99999-9999"
+                    placeholder="(00) 00000-0000"
                   />
                   {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-900 mb-1">
                     Data de Nascimento *
                   </label>
                   <input
-                    type="date"
+                    type="text"
                     id="dataNascimento"
                     name="dataNascimento"
                     value={formData.dataNascimento}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.dataNascimento ? 'border-red-500' : 'border-gray-300'
+                    inputMode="numeric"
+                    maxLength={10}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.dataNascimento ? 'border-red-500' : 'border-gray-400'
                     }`}
+                    placeholder="dd/mm/aaaa"
                   />
                   {errors.dataNascimento && <p className="text-red-500 text-sm mt-1">{errors.dataNascimento}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="genero" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="genero" className="block text-sm font-medium text-gray-900 mb-1">
                     Gênero *
                   </label>
                   <select
@@ -262,8 +301,8 @@ export default function PacienteRegistroPage() {
                     name="genero"
                     value={formData.genero}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.genero ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.genero ? 'border-red-500' : 'border-gray-400'
                     }`}
                   >
                     <option value="">Selecione</option>
@@ -282,8 +321,8 @@ export default function PacienteRegistroPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço</h3>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-1">
-                    Endereço
+                  <label htmlFor="endereco" className="block text-sm font-medium text-gray-900 mb-1">
+                    Endereço *
                   </label>
                   <input
                     type="text"
@@ -291,15 +330,19 @@ export default function PacienteRegistroPage() {
                     name="endereco"
                     value={formData.endereco}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    maxLength={60}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.endereco ? 'border-red-500' : 'border-gray-400'
+                    }`}
                     placeholder="Rua, número, complemento"
                   />
+                  {errors.endereco && <p className="text-red-500 text-sm mt-1">{errors.endereco}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-1">
-                      Cidade
+                    <label htmlFor="cidade" className="block text-sm font-medium text-gray-900 mb-1">
+                      Cidade *
                     </label>
                     <input
                       type="text"
@@ -307,14 +350,18 @@ export default function PacienteRegistroPage() {
                       name="cidade"
                       value={formData.cidade}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      maxLength={30}
+                      className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                        errors.cidade ? 'border-red-500' : 'border-gray-400'
+                      }`}
                       placeholder="Sua cidade"
                     />
+                    {errors.cidade && <p className="text-red-500 text-sm mt-1">{errors.cidade}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
-                      Estado
+                    <label htmlFor="estado" className="block text-sm font-medium text-gray-900 mb-1">
+                      Estado *
                     </label>
                     <input
                       type="text"
@@ -322,14 +369,18 @@ export default function PacienteRegistroPage() {
                       name="estado"
                       value={formData.estado}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      maxLength={2}
+                      className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 uppercase focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                        errors.estado ? 'border-red-500' : 'border-gray-400'
+                      }`}
                       placeholder="UF"
                     />
+                    {errors.estado && <p className="text-red-500 text-sm mt-1">{errors.estado}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-1">
-                      CEP
+                    <label htmlFor="cep" className="block text-sm font-medium text-gray-900 mb-1">
+                      CEP *
                     </label>
                     <input
                       type="text"
@@ -337,9 +388,14 @@ export default function PacienteRegistroPage() {
                       name="cep"
                       value={formData.cep}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      inputMode="numeric"
+                      maxLength={9}
+                      className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                        errors.cep ? 'border-red-500' : 'border-gray-400'
+                      }`}
                       placeholder="00000-000"
                     />
+                    {errors.cep && <p className="text-red-500 text-sm mt-1">{errors.cep}</p>}
                   </div>
                 </div>
               </div>
@@ -350,7 +406,7 @@ export default function PacienteRegistroPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Segurança</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="senha" className="block text-sm font-medium text-gray-900 mb-1">
                     Senha *
                   </label>
                   <input
@@ -359,16 +415,17 @@ export default function PacienteRegistroPage() {
                     name="senha"
                     value={formData.senha}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.senha ? 'border-red-500' : 'border-gray-300'
+                    maxLength={20}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.senha ? 'border-red-500' : 'border-gray-400'
                     }`}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Até 20 caracteres"
                   />
                   {errors.senha && <p className="text-red-500 text-sm mt-1">{errors.senha}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-900 mb-1">
                     Confirmar Senha *
                   </label>
                   <input
@@ -377,8 +434,9 @@ export default function PacienteRegistroPage() {
                     name="confirmarSenha"
                     value={formData.confirmarSenha}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'
+                    maxLength={20}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#d4af37] focus:border-transparent ${
+                      errors.confirmarSenha ? 'border-red-500' : 'border-gray-400'
                     }`}
                     placeholder="Digite a senha novamente"
                   />
@@ -396,9 +454,9 @@ export default function PacienteRegistroPage() {
                   name="aceitaTermos"
                   checked={formData.aceitaTermos}
                   onChange={handleInputChange}
-                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-400 rounded"
                 />
-                <label htmlFor="aceitaTermos" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="aceitaTermos" className="ml-2 text-sm text-gray-900">
                   Eu aceito os{" "}
                   <Link href="#" className="text-indigo-600 hover:text-indigo-800 underline">
                     Termos de Uso
@@ -415,9 +473,9 @@ export default function PacienteRegistroPage() {
                   name="aceitaPrivacidade"
                   checked={formData.aceitaPrivacidade}
                   onChange={handleInputChange}
-                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-400 rounded"
                 />
-                <label htmlFor="aceitaPrivacidade" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="aceitaPrivacidade" className="ml-2 text-sm text-gray-900">
                   Eu aceito a{" "}
                   <Link href="#" className="text-indigo-600 hover:text-indigo-800 underline">
                     Política de Privacidade
@@ -433,7 +491,7 @@ export default function PacienteRegistroPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-[#d4af37] hover:bg-[#c9a227] disabled:bg-[#e7d48a] text-black font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
               >
                 {isSubmitting ? "Criando conta..." : "Criar Conta de Paciente"}
               </button>
@@ -443,7 +501,7 @@ export default function PacienteRegistroPage() {
             <div className="text-center">
               <Link 
                 href="/registro"
-                className="text-green-600 hover:text-green-800 text-sm underline"
+                className="text-[#d4af37] hover:text-[#c9a227] text-sm underline"
               >
                 ← Voltar para opções de registro
               </Link>
@@ -451,6 +509,7 @@ export default function PacienteRegistroPage() {
           </form>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

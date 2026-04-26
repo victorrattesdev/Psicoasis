@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { fromJsonString, toJsonString } from '@/lib/json-utils';
+import { requireAdmin } from '@/lib/auth';
 
 // Helper to locate record and infer type
 async function findUserOrTherapistById(id: string) {
@@ -13,6 +14,9 @@ async function findUserOrTherapistById(id: string) {
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const unauthorized = await requireAdmin(_req);
+    if (unauthorized) return unauthorized;
+
     const { id } = await ctx.params;
     const found = await findUserOrTherapistById(id);
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -38,7 +42,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       role: 'USER', 
       createdAt: t.createdAt, 
       updatedAt: t.updatedAt, 
-      profile: fromJsonString(t.profile) ?? {} 
+      profile: fromJsonString(t.profile) ?? {},
+      photoUrl: t.photoUrl ?? null
     });
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
@@ -47,8 +52,11 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const unauthorized = await requireAdmin(req);
+    if (unauthorized) return unauthorized;
+
     const body = await req.json().catch(() => ({}));
-    const { name, email, role, profile } = body as { name?: string; email?: string; role?: 'USER' | 'ADMIN'; profile?: any };
+    const { name, email, role, profile, photoUrl } = body as { name?: string; email?: string; role?: 'USER' | 'ADMIN'; profile?: any; photoUrl?: string | null };
     const { id } = await ctx.params;
     const found = await findUserOrTherapistById(id);
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -75,13 +83,18 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
 
     // Therapist: update name/email only (no role)
+    const updateData: Record<string, any> = {
+      name: name ?? undefined,
+      email: email ?? undefined,
+      profile: profile ? toJsonString(profile) : undefined,
+      photoUrl: photoUrl ?? undefined,
+    };
+    if (Array.isArray(profile?.especialidades)) {
+      updateData.specialties = toJsonString(profile.especialidades);
+    }
     const updatedT = await prisma.therapist.update({
       where: { id },
-      data: {
-        name: name ?? undefined,
-        email: email ?? undefined,
-        profile: profile ? toJsonString(profile) : undefined,
-      },
+      data: updateData,
     });
     return NextResponse.json({ 
       id: updatedT.id, 
@@ -89,7 +102,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       email: updatedT.email, 
       type: 'profissional', 
       role: 'USER', 
-      profile: fromJsonString(updatedT.profile as string) ?? {} 
+      profile: fromJsonString(updatedT.profile as string) ?? {},
+      photoUrl: updatedT.photoUrl ?? null
     });
   } catch (error: any) {
     if (error?.code === 'P2002') {
@@ -101,6 +115,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
+    const unauthorized = await requireAdmin(_req);
+    if (unauthorized) return unauthorized;
+
     const { id } = await ctx.params;
     const found = await findUserOrTherapistById(id);
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });

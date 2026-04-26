@@ -4,10 +4,43 @@ import { fromJsonString } from "@/lib/json-utils";
 
 export async function GET(req: NextRequest) {
   try {
-    // Get user from headers or session to verify admin access
-    // For now, we'll allow access - in production, add proper auth check
-    
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const therapistId = searchParams.get("therapistId");
+    const adminEmail = searchParams.get("adminEmail");
+
+    let canViewAll = false;
+    let whereClause: any = {};
+
+    if (userId) {
+      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "ADMIN") {
+        canViewAll = true;
+      }
+    }
+
+    if (!canViewAll && adminEmail) {
+      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
+      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
+        canViewAll = true;
+      }
+    }
+
+    if (!canViewAll && therapistId) {
+      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
+      if (therapist?.canPostBlog) {
+        whereClause = { authorTherapistId: therapistId };
+      } else {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+      }
+    }
+
+    if (!canViewAll && !therapistId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
     const posts = await prisma.post.findMany({
+      where: whereClause,
       select: {
         id: true,
         title: true,

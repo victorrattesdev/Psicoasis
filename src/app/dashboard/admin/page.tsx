@@ -2,15 +2,28 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+type ActivityItem = {
+  id: string;
+  type: "user" | "therapist" | "post";
+  title: string;
+  description: string;
+  createdAt: string;
+};
+
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
   const [stats, setStats] = useState<{ users: number; therapists: number; posts: number; sessions: number; sessionsCompleted: number; sessionsScheduled: number } | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(true);
+
+  const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem("psicoasis_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +46,80 @@ export default function AdminDashboard() {
     load();
   }, []);
 
+  useEffect(() => {
+    const loadActivity = async () => {
+      setIsLoadingActivity(true);
+      try {
+        const res = await fetch('/api/admin/activity', {
+          cache: 'no-store',
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) {
+          console.error('Failed to load activity:', res.status);
+          return;
+        }
+        const data = await res.json();
+        setRecentActivity(Array.isArray(data?.activities) ? data.activities : []);
+      } catch (error) {
+        console.error('Error loading activity:', error);
+      } finally {
+        setIsLoadingActivity(false);
+      }
+    };
+    loadActivity();
+  }, []);
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const time = date.getTime();
+    if (Number.isNaN(time)) return "";
+    const diffMs = Date.now() - time;
+    if (diffMs <= 0) return "agora mesmo";
+    const minutes = Math.floor(diffMs / 1000 / 60);
+    if (minutes < 1) return "agora mesmo";
+    if (minutes < 60) return `há ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `há ${hours} ${hours === 1 ? "hora" : "horas"}`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `há ${days} ${days === 1 ? "dia" : "dias"}`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `há ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `há ${months} ${months === 1 ? "mês" : "meses"}`;
+    const years = Math.floor(days / 365);
+    return `há ${years} ${years === 1 ? "ano" : "anos"}`;
+  };
+
+  const activityMeta: Record<ActivityItem["type"], { bg: string; text: string; icon: JSX.Element }> = {
+    post: {
+      bg: "bg-green-100",
+      text: "text-green-600",
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    user: {
+      bg: "bg-blue-100",
+      text: "text-blue-600",
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+      )
+    },
+    therapist: {
+      bg: "bg-purple-100",
+      text: "text-purple-600",
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      )
+    }
+  };
+
   // Check if user is admin
   if (user?.role !== "ADMIN") {
     return (
@@ -48,37 +135,6 @@ export default function AdminDashboard() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold text-green-600">
-                  OASIS da Superdotação
-                </Link>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard/admin/users" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Usuários
-                </Link>
-                <Link href="/dashboard/admin/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Estudos do OASIS
-                </Link>
-                <Link href="/blog" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Ver Blog
-                </Link>
-                <span className="text-sm text-gray-500">Admin: {user?.name}</span>
-                <button 
-                  onClick={() => { logout(); router.replace('/'); }}
-                  className="text-gray-500 hover:text-gray-700 text-sm"
-                >
-                  Sair
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -87,7 +143,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex items-center">
                 <div className="p-2 bg-indigo-100 rounded-lg">
@@ -96,25 +152,9 @@ export default function AdminDashboard() {
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Usuários</p>
+                  <p className="text-sm font-medium text-gray-500">Pacientes</p>
                   <p className="text-2xl font-semibold text-gray-900">
                     {isLoadingStats ? '...' : (stats?.users ?? 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Posts do Blog</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {isLoadingStats ? '...' : (stats?.posts ?? 0)}
                   </p>
                 </div>
               </div>
@@ -138,15 +178,15 @@ export default function AdminDashboard() {
 
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Sessões</p>
+                  <p className="text-sm font-medium text-gray-500">Artigos Publicados</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {isLoadingStats ? '...' : (stats?.sessions ?? 0)}
+                    {isLoadingStats ? '...' : (stats?.posts ?? 0)}
                   </p>
                 </div>
               </div>
@@ -206,59 +246,9 @@ export default function AdminDashboard() {
                 >
                   Ver Usuários
                 </Link>
-                <button className="bg-white text-green-600 border border-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors">
-                  Adicionar Usuário
-                </button>
               </div>
             </div>
 
-            {/* Analytics */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Analytics</h2>
-                <Link
-                  href="#"
-                  className="text-green-600 hover:text-green-500 text-sm font-medium"
-                >
-                  Ver relatório completo
-                </Link>
-              </div>
-              <p className="text-gray-600 mb-4">
-                Visualize métricas e relatórios sobre o uso da plataforma.
-              </p>
-              <div className="flex space-x-3">
-                <button className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors">
-                  Ver Analytics
-                </button>
-                <button className="bg-white text-green-600 border border-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors">
-                  Exportar Dados
-                </button>
-              </div>
-            </div>
-
-            {/* System Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Configurações</h2>
-                <Link
-                  href="#"
-                  className="text-green-600 hover:text-green-500 text-sm font-medium"
-                >
-                  Configurar
-                </Link>
-              </div>
-              <p className="text-gray-600 mb-4">
-                Configure as configurações gerais do sistema e personalização.
-              </p>
-              <div className="flex space-x-3">
-                <button className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors">
-                  Configurações
-                </button>
-                <button className="bg-white text-green-600 border border-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors">
-                  Backup
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Recent Activity */}
@@ -267,49 +257,33 @@ export default function AdminDashboard() {
               <h2 className="text-lg font-medium text-gray-900">Atividade Recente</h2>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Novo post publicado</p>
-                    <p className="text-sm text-gray-500">"Entendendo a Ansiedade" foi publicado há 2 horas</p>
-                  </div>
+              {isLoadingActivity ? (
+                <p className="text-sm text-gray-500">Carregando atividade recente...</p>
+              ) : recentActivity.length === 0 ? (
+                <p className="text-sm text-gray-500">Nenhuma atividade recente encontrada.</p>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivity.map((activity) => {
+                    const meta = activityMeta[activity.type];
+                    const relativeTime = formatRelativeTime(activity.createdAt);
+                    return (
+                      <div key={`${activity.type}-${activity.id}`} className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className={`h-8 w-8 rounded-full ${meta.bg} ${meta.text} flex items-center justify-center`}>
+                            {meta.icon}
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-sm text-gray-500">
+                            {activity.description} {relativeTime && `· ${relativeTime}`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Novo usuário registrado</p>
-                    <p className="text-sm text-gray-500">Maria Silva se registrou como paciente há 4 horas</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <svg className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Nova sessão agendada</p>
-                    <p className="text-sm text-gray-500">Sessão com Dr. Ana Silva agendada para amanhã</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
+import { signUserToken } from '@/lib/jwt';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 const ADMIN_PASSWORD = 'Creative1@'; // In production, use proper password hashing
@@ -62,8 +63,17 @@ export async function POST(req: NextRequest) {
       // }
     }
 
+    const token = await signUserToken({
+      sub: admin.id,
+      email: admin.email,
+      name: admin.name ?? 'Administrador',
+      type: 'profissional',
+      role: 'ADMIN'
+    });
+
     return NextResponse.json({
       success: true,
+      token,
       user: {
         id: admin.id,
         email: admin.email,
@@ -83,6 +93,8 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
 
 
 

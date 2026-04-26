@@ -11,9 +11,15 @@ export async function GET() {
         id: true,
         name: true,
         email: true,
+        license: true,
         bio: true,
         specialties: true,
         photoUrl: true,
+        approved: true,
+        canPostBlog: true,
+        profile: true,
+        createdAt: true,
+        updatedAt: true,
       },
       orderBy: {
         name: 'asc' // Order alphabetically by name
@@ -23,10 +29,15 @@ export async function GET() {
     console.log(`📊 Found ${therapists.length} approved therapist(s)`);
 
     // Parse JSON fields and format response
-    const formatted = therapists.map(t => ({
-      ...t,
-      specialties: fromJsonString(t.specialties as string) ?? []
-    }));
+    const formatted = therapists.map(t => {
+      const parsedProfile = fromJsonString(t.profile as string);
+      return {
+        ...t,
+        specialties: fromJsonString(t.specialties as string) ?? [],
+        profile: parsedProfile,
+        license: t.license ?? parsedProfile?.crp ?? null
+      };
+    });
 
     return NextResponse.json({ therapists: formatted });
   } catch (error) {

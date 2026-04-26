@@ -1,0 +1,78 @@
+import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { toJsonString, fromJsonString } from "@/lib/json-utils";
+
+const DEFAULT_KEY = "default";
+
+export async function GET() {
+  try {
+    const existing = await prisma.courseContent.findUnique({
+      where: { key: DEFAULT_KEY },
+      select: { content: true }
+    });
+    if (!existing) {
+      return NextResponse.json({ sections: null });
+    }
+    return NextResponse.json({ sections: fromJsonString(existing.content) ?? null });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      return NextResponse.json(
+        { error: "Tabela de cursos não existe. Rode prisma db push." },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ error: "Failed to load courses" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { userId, adminEmail, sections } = body as {
+      userId?: string;
+      adminEmail?: string;
+      sections?: unknown;
+    };
+
+    let isAdmin = false;
+    if (userId) {
+      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "ADMIN") isAdmin = true;
+    }
+    if (!isAdmin && adminEmail) {
+      const adminUser = await prisma.user.findFirst({
+        where: { email: adminEmail },
+        select: { role: true }
+      });
+      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
+        isAdmin = true;
+      }
+    }
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
+    if (!Array.isArray(sections)) {
+      return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
+    }
+
+    const content = toJsonString(sections) ?? "[]";
+    const saved = await prisma.courseContent.upsert({
+      where: { key: DEFAULT_KEY },
+      update: { content },
+      create: { key: DEFAULT_KEY, content }
+    });
+
+    return NextResponse.json({ sections: fromJsonString(saved.content) ?? [] });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+      return NextResponse.json(
+        { error: "Tabela de cursos não existe. Rode prisma db push." },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ error: "Failed to save courses" }, { status: 500 });
+  }
+}

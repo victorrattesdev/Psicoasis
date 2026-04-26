@@ -13,8 +13,12 @@ function slugify(text: string): string {
 }
 
 // GET - Buscar post para edição
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const therapistId = searchParams.get("therapistId");
+    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
     console.log('🔍 GET edit endpoint - Loading post with slug:', slug);
     
@@ -48,6 +52,30 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    let canAccess = false;
+    if (userId) {
+      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "ADMIN" || post.authorUserId === userId) {
+        canAccess = true;
+      }
+    }
+    if (!canAccess && adminEmail) {
+      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
+      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
+        canAccess = true;
+      }
+    }
+    if (!canAccess && therapistId) {
+      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
+      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
+        canAccess = true;
+      }
+    }
+
+    if (!canAccess) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
+
     return NextResponse.json({
       ...post,
       status: post.published ? 'published' : 'draft',
@@ -63,7 +91,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
   try {
     const { slug } = await params;
     const body = await req.json();
-    const { userId, therapistId, title, content, excerpt, coverImage, category, metaTitle, metaDescription, keywords, published } = body;
+    const { userId, therapistId, adminEmail, title, content, excerpt, coverImage, category, metaTitle, metaDescription, keywords, published } = body;
 
     console.log('✏️ PUT edit endpoint - Updating post with slug:', slug, { userId, therapistId, title });
 
@@ -91,6 +119,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
         // User can edit their own posts
         hasPermission = true;
         console.log('Permission granted: Post author');
+      }
+    }
+
+    if (!hasPermission && adminEmail) {
+      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
+      if (adminUser?.role === 'ADMIN' || adminEmail === 'admin@admin.com') {
+        hasPermission = true;
+        console.log('Permission granted: Admin email');
       }
     }
     

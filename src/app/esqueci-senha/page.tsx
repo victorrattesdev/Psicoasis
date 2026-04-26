@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function EsqueciSenhaPage() {
   const [formData, setFormData] = useState({
@@ -63,33 +64,6 @@ export default function EsqueciSenhaPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        {/* Navigation */}
-        <nav className="absolute top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link href="/" className="text-2xl font-bold text-green-600">
-                  OASIS da Superdotação
-                </Link>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link 
-                  href="/login" 
-                  className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Entrar
-                </Link>
-                <Link 
-                  href="/registro" 
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Registrar
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
             <div className="text-center">
@@ -140,33 +114,6 @@ export default function EsqueciSenhaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-green-600">
-                OASIS da Superdotação
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/login" 
-                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Entrar
-              </Link>
-              <Link 
-                href="/registro" 
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Registrar
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
@@ -298,6 +245,7 @@ export default function EsqueciSenhaPage() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }

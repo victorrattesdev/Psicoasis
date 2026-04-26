@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, validateName, sanitizeEmail, sanitizeString } from '@/lib/validations';
 import { toJsonString, fromJsonString } from '@/lib/json-utils';
+import { signUserToken } from '@/lib/jwt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,13 +74,22 @@ export async function POST(req: NextRequest) {
         }
       });
 
+      const token = await signUserToken({
+        sub: created.id,
+        email: created.email,
+        name: created.name ?? '',
+        type: 'paciente',
+        role: created.role
+      });
+
       return NextResponse.json({
         id: created.id,
         email: created.email,
         name: created.name ?? '',
         type: 'paciente',
         role: created.role,
-        profile: created.profile ?? {}
+        profile: created.profile ?? {},
+        token
       }, { status: 201 });
     }
 
@@ -115,13 +125,22 @@ export async function POST(req: NextRequest) {
         }
       });
 
+      const token = await signUserToken({
+        sub: created.id,
+        email: created.email,
+        name: created.name,
+        type: 'profissional',
+        role: 'USER'
+      });
+
       return NextResponse.json({
         id: created.id,
         email: created.email,
         name: created.name,
         type: 'profissional',
         role: 'USER',
-        profile: fromJsonString(created.profile as string) ?? {}
+        profile: fromJsonString(created.profile as string) ?? {},
+        token
       }, { status: 201 });
     }
 

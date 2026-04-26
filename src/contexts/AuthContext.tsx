@@ -8,6 +8,7 @@ interface User {
   email: string;
   type: 'paciente' | 'profissional';
   role?: 'USER' | 'ADMIN';
+  photoUrl?: string;
   // Patient specific fields
   telefone?: string;
   dataNascimento?: string;
@@ -18,6 +19,7 @@ interface User {
   cep?: string;
   // Professional specific fields
   crp?: string;
+  abordagens?: string[];
   especialidades?: string[];
   formacao?: string;
   experiencia?: string;
@@ -40,91 +42,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Sample users data - in a real app, this would come from your database
-let sampleUsers: User[] = [
-  {
-    id: '1',
-    name: 'João Silva',
-    email: 'joao@email.com',
-    type: 'paciente',
-    telefone: '(11) 99999-9999',
-    dataNascimento: '1990-05-15',
-    genero: 'masculino',
-    endereco: 'Rua das Flores, 123',
-    cidade: 'São Paulo',
-    estado: 'SP',
-    cep: '01234-567'
-  },
-  {
-    id: '2',
-    name: 'Dr. Ana Silva',
-    email: 'ana@email.com',
-    type: 'profissional',
-    crp: 'CRP 06/123456',
-    especialidades: ['Ansiedade', 'Depressão', 'Terapia Cognitivo-Comportamental'],
-    formacao: 'Psicologia - Universidade de São Paulo',
-    experiencia: '8 anos',
-    bio: 'Especialista em terapia cognitivo-comportamental com foco em transtornos de ansiedade e depressão. Atendimento presencial e online.',
-    valorConsulta: '150',
-    aceitaOnline: true,
-    aceitaPresencial: true,
-    horariosDisponibilidade: 'Segunda a Sexta, 8h às 18h'
-  },
-  {
-    id: '3',
-    name: 'Maria Santos',
-    email: 'maria@email.com',
-    type: 'paciente',
-    telefone: '(11) 88888-8888',
-    dataNascimento: '1985-03-20',
-    genero: 'feminino',
-    endereco: 'Av. Paulista, 456',
-    cidade: 'São Paulo',
-    estado: 'SP',
-    cep: '01310-100'
-  },
-  {
-    id: '4',
-    name: 'Dr. Carlos Mendes',
-    email: 'carlos@email.com',
-    type: 'profissional',
-    crp: 'CRP 05/789012',
-    especialidades: ['Terapia de Casal', 'Família', 'Psicologia Positiva'],
-    formacao: 'Psicologia - PUC-SP',
-    experiencia: '12 anos',
-    bio: 'Especialista em terapia familiar e de casal, com vasta experiência em resolução de conflitos e fortalecimento de relacionamentos.',
-    valorConsulta: '180',
-    aceitaOnline: true,
-    aceitaPresencial: true,
-    horariosDisponibilidade: 'Terça a Quinta, 14h às 20h'
-  },
-  {
-    id: '5',
-    name: 'Admin OASIS da Superdotação',
-    email: 'admin@admin.com',
-    type: 'profissional',
-    role: 'ADMIN',
-    crp: 'CRP 06/000000',
-    especialidades: ['Administração', 'Gestão'],
-    formacao: 'Psicologia - USP',
-    experiencia: '15 anos',
-    bio: 'Administrador do OASIS da Superdotação',
-    valorConsulta: '0',
-    aceitaOnline: false,
-    aceitaPresencial: false,
-    horariosDisponibilidade: 'Segunda a Sexta, 8h às 18h'
-  }
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const parseJwtPayload = (token: string) => {
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) return null;
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+      const decoded = atob(padded);
+      return JSON.parse(decoded);
+    } catch {
+      return null;
+    }
+  };
+
+  const getUserFromToken = (token: string): User | null => {
+    const payload = parseJwtPayload(token);
+    if (!payload) return null;
+    if (payload.exp && Date.now() >= payload.exp * 1000) return null;
+    return {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name ?? "",
+      type: payload.type,
+      role: payload.role ?? "USER"
+    } as User;
+  };
+
   useEffect(() => {
     // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('psicoasis_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const savedToken = localStorage.getItem('psicoasis_token');
+    if (savedToken) {
+      const tokenUser = getUserFromToken(savedToken);
+      if (tokenUser) {
+        setUser(tokenUser);
+      } else {
+        localStorage.removeItem('psicoasis_token');
+      }
+    }
+    if (!savedToken) {
+      const savedUser = localStorage.getItem('psicoasis_user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
     }
     setIsLoading(false);
   }, []);
@@ -143,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const data = await res.json();
       setUser(data.user);
+      if (data.token) {
+        localStorage.setItem('psicoasis_token', data.token);
+      }
       localStorage.setItem('psicoasis_user', JSON.stringify(data.user));
       setIsLoading(false);
       return true;
@@ -155,30 +121,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginAdmin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Find admin user in sample data
-    const foundUser = sampleUsers.find(u => 
-      u.email === email && u.type === 'profissional' && u.role === 'ADMIN'
-    );
-    
-    if (foundUser) {
-      // Validate specific admin credentials
-      if (email === 'admin@admin.com' && password === 'Creative1@') {
-        setUser(foundUser);
-        localStorage.setItem('psicoasis_user', JSON.stringify(foundUser));
-        setIsLoading(false);
-        return true;
-      } else {
+    try {
+      const res = await fetch('/api/auth/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) {
         setIsLoading(false);
         return false;
       }
+
+      const data = await res.json();
+      setUser(data.user);
+      if (data.token) {
+        localStorage.setItem('psicoasis_token', data.token);
+      }
+      localStorage.setItem('psicoasis_user', JSON.stringify(data.user));
+      setIsLoading(false);
+      return true;
+    } catch {
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const register = async (userData: Omit<User, 'id'>): Promise<boolean> => {
@@ -200,14 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             estado: (userData as any).estado,
             cep: (userData as any).cep,
             crp: (userData as any).crp,
+            abordagens: (userData as any).abordagens,
             especialidades: (userData as any).especialidades,
             formacao: (userData as any).formacao,
             experiencia: (userData as any).experiencia,
             bio: (userData as any).bio,
             valorConsulta: (userData as any).valorConsulta,
+            photoUrl: (userData as any).photoUrl,
             aceitaOnline: (userData as any).aceitaOnline,
-            aceitaPresencial: (userData as any).aceitaPresencial,
-            horariosDisponibilidade: (userData as any).horariosDisponibilidade
+            aceitaPresencial: (userData as any).aceitaPresencial
           }
         })
       });
@@ -232,6 +198,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: created.role ?? 'USER'
       };
       setUser(normalized);
+      if (created.token) {
+        localStorage.setItem('psicoasis_token', created.token);
+      }
       localStorage.setItem('psicoasis_user', JSON.stringify(normalized));
       setIsLoading(false);
       return true;
@@ -246,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('psicoasis_user');
+    localStorage.removeItem('psicoasis_token');
   };
 
   const value = {

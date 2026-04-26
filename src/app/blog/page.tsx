@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 import { useState, useEffect } from "react";
 
 interface BlogPost {
@@ -19,6 +20,8 @@ export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const baseCategories = ["Todos", "Autismo", "Neuropsicologia", "Superdotação", "Saúde Mental", "Adolescentes", "Bem-estar", "Família", "Altas Habilidades"];
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(baseCategories);
 
   useEffect(() => {
     const load = async () => {
@@ -29,7 +32,18 @@ export default function BlogPage() {
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
-        setPosts(Array.isArray(data?.posts) ? data.posts : []);
+        const nextPosts = Array.isArray(data?.posts) ? data.posts : [];
+        setPosts(nextPosts);
+        const dynamicCategories = nextPosts
+          .map((post: BlogPost) => (post.category || "").trim())
+          .filter(Boolean);
+        if (dynamicCategories.length) {
+          setCategoryOptions((prev) => {
+            const merged = new Set(prev);
+            dynamicCategories.forEach((category: string) => merged.add(category));
+            return Array.from(merged);
+          });
+        }
       } catch {}
       finally {
         setLoading(false);
@@ -38,7 +52,9 @@ export default function BlogPage() {
     load();
   }, [selectedCategory]);
 
-  const categories = ["Todos", "Saúde Mental", "Adolescentes", "Bem-estar", "Família", "Superdotação", "Altas Habilidades"];
+  const pinnedCategories = ["Todos", "Autismo", "Neuropsicologia", "Superdotação"];
+  const visibleCategories = pinnedCategories;
+  const overflowCategories = categoryOptions.filter((category) => !pinnedCategories.includes(category));
 
   const filteredPosts = posts.filter(post => {
     const matchesSearch = searchTerm === "" || 
@@ -49,61 +65,15 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-green-600">
-                OASIS da Superdotação
-              </Link>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Início
-                </Link>
-                <Link href="/psicologos" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  OASIS da Psicologia
-                </Link>
-                <Link href="/blog" className="text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Estudos do OASIS
-                </Link>
-                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Avaliação Neuropsicológica
-                </Link>
-                <Link href="#" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Contato
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/login"
-                className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-              >
-                Entrar
-              </Link>
-              <Link 
-                href="/registro"
-                className="text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50 transition-colors"
-              >
-                Cadastrar
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-              Estudos do OASIS
+              Artigos
             </h1>
             <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Artigos e insights sobre superdotação, altas habilidades e psicologia para ajudar você em sua jornada de autoconhecimento.
+              Artigos sobre os mais diversos tópicos relacionados a saúde mental e a neuropsicologia com objetivo de informar, esclarecer e até mesmo ajudar você.
             </p>
           </div>
         </div>
@@ -112,9 +82,9 @@ export default function BlogPage() {
       {/* Search and Filter Section */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
-            <div className="flex-1 max-w-md">
+            <div className="w-full md:w-auto md:flex-1 md:max-w-md">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,26 +96,44 @@ export default function BlogPage() {
                   placeholder="Buscar artigos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37]"
                 />
               </div>
             </div>
 
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
+            <div className="w-full md:flex-1 flex items-center gap-3 md:justify-end overflow-hidden">
+              <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
+                {visibleCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
-                      ? "bg-green-600 text-white"
+                      ? "bg-[#d4af37] text-black"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {category}
                 </button>
               ))}
+              </div>
+              {overflowCategories.length > 0 && (
+                <select
+                  value={overflowCategories.includes(selectedCategory) ? selectedCategory : ""}
+                  onChange={(e) => {
+                    if (e.target.value) setSelectedCategory(e.target.value);
+                  }}
+                  className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37]"
+                >
+                  <option value="">Mais temas</option>
+                  {overflowCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>
@@ -155,7 +143,7 @@ export default function BlogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d4af37] mx-auto mb-4"></div>
             <p className="text-gray-600">Carregando artigos...</p>
           </div>
         ) : filteredPosts.length === 0 ? (
@@ -184,7 +172,7 @@ export default function BlogPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     {post.category && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff4c1] text-[#7a5a00]">
                         {post.category}
                       </span>
                     )}
@@ -208,8 +196,8 @@ export default function BlogPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="shrink-0">
-                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-green-600">
+                        <div className="h-8 w-8 rounded-full bg-[#fff4c1] flex items-center justify-center">
+                          <span className="text-sm font-medium text-[#7a5a00]">
                             {post.author.split(' ').map(n => n[0]).slice(0,2).join('')}
                           </span>
                         </div>
@@ -221,7 +209,9 @@ export default function BlogPage() {
                     
                     <Link
                       href={`/blog/${post.slug}`}
-                      className="inline-flex items-center text-green-600 hover:text-green-500 text-sm font-medium"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-[#d4af37] hover:text-[#c9a227] text-sm font-medium"
                     >
                       Ler mais
                       <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,69 +226,7 @@ export default function BlogPage() {
         )}
       </div>
 
-      {/* Newsletter Section */}
-      <div className="bg-green-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-white">
-              Fique por dentro das novidades
-            </h2>
-            <p className="mt-4 text-xl text-green-100">
-              Receba nossos artigos mais recentes diretamente no seu e-mail.
-            </p>
-            <div className="mt-8 max-w-md mx-auto">
-              <div className="flex gap-4">
-                <input
-                  type="email"
-                  placeholder="Seu e-mail"
-                  className="flex-1 px-4 py-3 rounded-md border-0 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-300"
-                />
-                <button className="px-6 py-3 bg-white text-green-600 font-medium rounded-md hover:bg-gray-50 transition-colors">
-                  Inscrever-se
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <Link href="/" className="text-2xl font-bold text-green-600">
-                OASIS da Superdotação
-              </Link>
-              <p className="mt-4 text-gray-600">
-                Conectando pessoas com profissionais de psicologia para uma vida mais saudável e equilibrada.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Blog</h4>
-              <ul className="space-y-2">
-                <li><Link href="/blog" className="text-gray-600 hover:text-green-600">Todos os artigos</Link></li>
-                <li><Link href="/blog?category=saude-mental" className="text-gray-600 hover:text-green-600">Saúde Mental</Link></li>
-                <li><Link href="/blog?category=bem-estar" className="text-gray-600 hover:text-green-600">Bem-estar</Link></li>
-                <li><Link href="/blog?category=familia" className="text-gray-600 hover:text-green-600">Família</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contato</h4>
-              <ul className="space-y-2">
-                <li><Link href="#" className="text-gray-600 hover:text-green-600">Sobre</Link></li>
-                <li><Link href="#" className="text-gray-600 hover:text-green-600">Contato</Link></li>
-                <li><Link href="/psicologos" className="text-gray-600 hover:text-green-600">OASIS da Psicologia</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-center text-gray-500">
-              © 2024 OASIS da Superdotação. Todos os direitos reservados.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

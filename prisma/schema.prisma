@@ -176,3 +176,13 @@ model Post {
   @@index([authorTherapistId])
   @@index([blogId])
 }
+
+model CourseContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  content   String   // JSON stored as String in SQLite
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("course_contents")
+}

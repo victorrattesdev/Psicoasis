@@ -16,7 +16,20 @@ function slugify(text: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, therapistId, title, content, excerpt, coverImage, category, metaTitle, metaDescription, keywords, published } = body;
+    const {
+      userId,
+      therapistId,
+      adminEmail,
+      title,
+      content,
+      excerpt,
+      coverImage,
+      category,
+      metaTitle,
+      metaDescription,
+      keywords,
+      published
+    } = body;
 
     console.log('Creating post with data:', { userId, therapistId, title: title?.substring(0, 50), hasContent: !!content });
 
@@ -46,21 +59,20 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Try to find admin by email if not found by ID
-    if (!hasPermission) {
+    // Try admin email explicitly (always allow admin)
+    if (!hasPermission && adminEmail) {
       try {
-        const adminUser = await prisma.user.findFirst({ 
-          where: { email: 'admin@admin.com' }
-        });
+        const adminUser = await prisma.user.findFirst({ where: { email: adminEmail } });
         if (adminUser && (adminUser as any).role === 'ADMIN') {
           hasPermission = true;
           finalUserId = adminUser.id;
+          finalTherapistId = null;
         }
       } catch (error: any) {
         console.warn('Could not find admin user by email:', error?.message);
       }
     }
-    
+
     // Try therapist if still not found
     if (!hasPermission && therapistId) {
       try {
@@ -76,9 +88,24 @@ export async function POST(req: NextRequest) {
         console.warn('Could not find therapist by ID:', error?.message);
       }
     }
+
+    // Try to find admin by email if not found by ID (only when not therapist)
+    if (!hasPermission && !therapistId) {
+      try {
+        const adminUser = await prisma.user.findFirst({ 
+          where: { email: 'admin@admin.com' }
+        });
+        if (adminUser && (adminUser as any).role === 'ADMIN') {
+          hasPermission = true;
+          finalUserId = adminUser.id;
+        }
+      } catch (error: any) {
+        console.warn('Could not find admin user by email:', error?.message);
+      }
+    }
     
-    // Try to find admin therapist by email if still not found
-    if (!hasPermission) {
+    // Try to find admin therapist by email if still not found (only when not therapist)
+    if (!hasPermission && !therapistId) {
       try {
         const adminTherapist = await prisma.therapist.findFirst({ 
           where: { email: 'admin@admin.com' }
@@ -92,8 +119,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // If still no permission, try to create admin user if email matches
-    if (!hasPermission) {
+    // If still no permission, try to create admin user if email matches (only when not therapist)
+    if (!hasPermission && !therapistId) {
       try {
         // Check if the request is from admin email (from context or body)
         const adminEmail = 'admin@admin.com';
