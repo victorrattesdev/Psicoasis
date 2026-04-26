@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, validateName, sanitizeEmail, sanitizeString } from '@/lib/validations';
-import { toJsonString } from '@/lib/json-utils';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 const ADMIN_PASSWORD = 'Creative1@'; // In production, this should be hashed
@@ -86,10 +85,10 @@ export async function POST(req: NextRequest) {
         email: sanitizedEmail,
         name: sanitizeString(name) || 'Administrador',
         role: 'ADMIN',
-        profile: toJsonString({
+        profile: {
           isAdmin: true,
           createdAt: new Date().toISOString()
-        })
+        }
       }
     });
 
