@@ -3,64 +3,40 @@ import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
 
-const ADMIN_EMAIL = 'admin@admin.com';
-const ADMIN_PASSWORD = 'Creative1@'; // In production, use proper password hashing
-
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { email, password } = body as {
-      email: string;
-      password: string;
-    };
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // Validate required fields
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email e senha são obrigatórios' },
-        { status: 400 }
-      );
+    if (!adminEmail || !adminPassword) {
+      console.error('ADMIN_EMAIL or ADMIN_PASSWORD env vars not set');
+      return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 500 });
     }
 
-    // Validate email format
+    const body = await req.json();
+    const { email, password } = body as { email: string; password: string };
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email e senha são obrigatórios' }, { status: 400 });
+    }
+
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) {
-      return NextResponse.json(
-        { error: emailValidation.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: emailValidation.error }, { status: 400 });
     }
 
     const sanitizedEmail = sanitizeEmail(email);
 
-    // Find admin user
+    if (sanitizedEmail !== adminEmail || password !== adminPassword) {
+      return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 });
+    }
+
     const admin = await prisma.user.findFirst({
-      where: {
-        email: sanitizedEmail,
-        role: 'ADMIN'
-      }
+      where: { email: sanitizedEmail, role: 'ADMIN' }
     });
 
     if (!admin) {
-      return NextResponse.json(
-        { error: 'Email ou senha incorretos' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password (in production, use bcrypt or similar)
-    // For now, check against default admin credentials
-    const isDefaultAdmin = sanitizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD;
-    
-    // In production, you should hash passwords and compare
-    // For now, we'll allow login if it's the default admin or if password matches
-    // TODO: Implement proper password hashing
-    if (!isDefaultAdmin) {
-      // In production, verify hashed password here
-      // const isValidPassword = await bcrypt.compare(password, admin.hashedPassword);
-      // if (!isValidPassword) {
-      //   return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 });
-      // }
+      return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 });
     }
 
     const token = await signUserToken({
@@ -78,7 +54,7 @@ export async function POST(req: NextRequest) {
         id: admin.id,
         email: admin.email,
         name: admin.name ?? 'Administrador',
-        type: 'profissional', // Admin is treated as professional type in the frontend
+        type: 'profissional',
         role: 'ADMIN'
       }
     });
@@ -86,16 +62,9 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const prismaError = handlePrismaError(error);
     console.error('Admin login error:', error);
-    
     return NextResponse.json(
       { error: prismaError.message || 'Erro ao fazer login. Tente novamente.' },
       { status: 500 }
     );
   }
 }
-
-
-
-
-
-
