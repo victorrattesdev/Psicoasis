@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { fromJsonString } from '@/lib/json-utils';
 
 export async function GET() {
   try {
-    // Fetch all approved therapists
     const therapists = await prisma.therapist.findMany({
       where: { approved: true },
       select: {
@@ -22,18 +20,17 @@ export async function GET() {
         updatedAt: true,
       },
       orderBy: {
-        name: 'asc' // Order alphabetically by name
+        name: 'asc'
       }
     });
 
     console.log(`📊 Found ${therapists.length} approved therapist(s)`);
 
-    // Parse JSON fields and format response
     const formatted = therapists.map(t => {
-      const parsedProfile = fromJsonString(t.profile as string);
+      const parsedProfile = t.profile as any;
       return {
         ...t,
-        specialties: fromJsonString(t.specialties as string) ?? [],
+        specialties: (t.specialties as any) ?? [],
         profile: parsedProfile,
         license: t.license ?? parsedProfile?.crp ?? null
       };

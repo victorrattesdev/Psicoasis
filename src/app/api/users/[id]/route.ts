@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { fromJsonString, toJsonString } from "@/lib/json-utils";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -16,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       id: user.id,
       name: user.name ?? "",
       email: user.email,
-      profile: fromJsonString(user.profile as string) ?? {}
+      profile: (user.profile as any) ?? {}
     });
   } catch {
     return NextResponse.json({ error: "Failed to load user" }, { status: 500 });
@@ -37,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
     }
 
-    const existingProfile = fromJsonString(user.profile as string) ?? {};
+    const existingProfile = (user.profile as any) ?? {};
     const allowed = {
       cep: incomingProfile?.cep,
       endereco: incomingProfile?.endereco,
@@ -49,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     await prisma.user.update({
       where: { id: params.id },
-      data: { profile: toJsonString(nextProfile) }
+      data: { profile: nextProfile }
     });
 
     return NextResponse.json({ profile: nextProfile });

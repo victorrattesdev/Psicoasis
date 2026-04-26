@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { fromJsonString, toJsonString } from "@/lib/json-utils";
 import { sanitizeEmail, validateEmail } from "@/lib/validations";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -11,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const profile = fromJsonString(therapist.profile as string) ?? {};
+    const profile = (therapist.profile as any) ?? {};
     const patientIds = Array.isArray(profile?.patientIds) ? profile.patientIds : [];
     if (patientIds.length === 0) return NextResponse.json({ patients: [] });
 
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const profile = fromJsonString(therapist.profile as string) ?? {};
+    const profile = (therapist.profile as any) ?? {};
     const patientIds = Array.isArray(profile?.patientIds) ? profile.patientIds : [];
     if (patientIds.includes(user.id)) {
       return NextResponse.json({ error: "Paciente já está na lista" }, { status: 409 });
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     await prisma.therapist.update({
       where: { id: params.id },
-      data: { profile: toJsonString({ ...profile, patientIds }) }
+      data: { profile: { ...profile, patientIds } }
     });
 
     const patients = await prisma.user.findMany({
@@ -103,13 +102,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const profile = fromJsonString(therapist.profile as string) ?? {};
+    const profile = (therapist.profile as any) ?? {};
     const patientIds = Array.isArray(profile?.patientIds) ? profile.patientIds : [];
     const nextPatientIds = patientIds.filter((id: string) => id !== patientId);
 
     await prisma.therapist.update({
       where: { id: params.id },
-      data: { profile: toJsonString({ ...profile, patientIds: nextPatientIds }) }
+      data: { profile: { ...profile, patientIds: nextPatientIds } }
     });
 
     const patients = await prisma.user.findMany({

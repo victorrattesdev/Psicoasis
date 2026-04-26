@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { toJsonString, fromJsonString } from "@/lib/json-utils";
 
 const DEFAULT_KEY = "default";
 
@@ -14,7 +13,7 @@ export async function GET() {
     if (!existing) {
       return NextResponse.json({ sections: null });
     }
-    return NextResponse.json({ sections: fromJsonString(existing.content) ?? null });
+    return NextResponse.json({ sections: existing.content ?? null });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
       return NextResponse.json(
@@ -58,14 +57,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Formato inválido" }, { status: 400 });
     }
 
-    const content = toJsonString(sections) ?? "[]";
     const saved = await prisma.courseContent.upsert({
       where: { key: DEFAULT_KEY },
-      update: { content },
-      create: { key: DEFAULT_KEY, content }
+      update: { content: sections },
+      create: { key: DEFAULT_KEY, content: sections }
     });
 
-    return NextResponse.json({ sections: fromJsonString(saved.content) ?? [] });
+    return NextResponse.json({ sections: saved.content ?? [] });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
       return NextResponse.json(

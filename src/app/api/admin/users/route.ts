@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { fromJsonString, toJsonString } from '@/lib/json-utils';
 import { validateEmail, validateName, sanitizeEmail, sanitizeString } from '@/lib/validations';
 import { requireAdmin } from '@/lib/auth';
 
@@ -16,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const normalized = [
       ...users.map(u => {
-        const profile = fromJsonString(u.profile as string) ?? {};
+        const profile = (u.profile as any) ?? {};
         return {
           id: u.id,
           name: u.name ?? '',
@@ -29,8 +28,8 @@ export async function GET(req: NextRequest) {
         };
       }),
       ...therapists.map(t => {
-        const profile = fromJsonString(t.profile as string) ?? {};
-        const specialties = fromJsonString(t.specialties as string) ?? [];
+        const profile = (t.profile as any) ?? {};
+        const specialties = (t.specialties as any) ?? [];
         return {
           id: t.id,
           name: t.name,
@@ -101,8 +100,8 @@ export async function POST(req: NextRequest) {
       data: {
         email: sanitizedEmail,
         name: sanitizeString(name) || sanitizedEmail.split('@')[0],
-        specialties: toJsonString(Array.isArray(profile?.especialidades) ? profile.especialidades : []),
-        profile: toJsonString(profile),
+        specialties: Array.isArray(profile?.especialidades) ? profile.especialidades : [],
+        profile: profile ?? null,
         photoUrl: profile?.photoUrl ? sanitizeString(profile.photoUrl) : null,
         license: profile?.crp ? sanitizeString(profile.crp) : null,
         bio: profile?.bio ? sanitizeString(profile.bio) : null,
@@ -119,7 +118,7 @@ export async function POST(req: NextRequest) {
       role: 'USER',
       createdAt: created.createdAt.toISOString().slice(0, 10),
       lastLogin: '',
-      profile: fromJsonString(created.profile as string) ?? {},
+      profile: (created.profile as any) ?? {},
       crp: profile?.crp || created.license,
       especialidades: Array.isArray(profile?.especialidades) ? profile.especialidades : [],
       canPostBlog: created.canPostBlog,
@@ -132,5 +131,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create professional' }, { status: 500 });
   }
 }
-
-

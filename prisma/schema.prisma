@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -50,10 +50,10 @@ model User {
   email     String   @unique
   name      String?
   role      UserRole @default(USER)
-  profile   String?  // JSON stored as String in SQLite
+  profile   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
   sessions  Session[]
   messages  Message[]
@@ -69,12 +69,12 @@ model Therapist {
   email       String   @unique
   name        String
   license     String?
-  specialties String   @default("[]") // JSON stored as String in SQLite
+  specialties Json     @default("[]")
   bio         String?
   photoUrl    String?
   approved    Boolean  @default(false)
   canPostBlog Boolean  @default(false) @map("canPost")
-  profile     String?  // JSON stored as String in SQLite
+  profile     Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -180,7 +180,7 @@ model Post {
 model CourseContent {
   id        String   @id @default(cuid())
   key       String   @unique
-  content   String   // JSON stored as String in SQLite
+  content   Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

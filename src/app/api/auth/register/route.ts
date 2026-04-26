@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, validateName, sanitizeEmail, sanitizeString } from '@/lib/validations';
-import { toJsonString, fromJsonString } from '@/lib/json-utils';
 import { signUserToken } from '@/lib/jwt';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, name, type, profile } = body as { 
-      email: string; 
-      name?: string; 
-      type: 'paciente' | 'profissional'; 
-      profile?: any 
+    const { email, name, type, profile } = body as {
+      email: string;
+      name?: string;
+      type: 'paciente' | 'profissional';
+      profile?: any
     };
 
     console.log('Registration attempt:', { email, type, hasName: !!name });
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       const nameValidation = validateName(name);
       if (!nameValidation.valid) {
         return NextResponse.json(
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest) {
         data: {
           email: sanitizedEmail,
           name: sanitizeString(name) || null,
-          profile: profile ? JSON.stringify(profile) : null,
+          profile: profile ?? null,
           role: 'USER'
         }
       });
@@ -88,7 +87,7 @@ export async function POST(req: NextRequest) {
         name: created.name ?? '',
         type: 'paciente',
         role: created.role,
-        profile: created.profile ?? {},
+        profile: (created.profile as any) ?? {},
         token
       }, { status: 201 });
     }
@@ -102,7 +101,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       const nameValidation = validateName(name);
       if (!nameValidation.valid) {
         return NextResponse.json(
@@ -115,8 +114,8 @@ export async function POST(req: NextRequest) {
         data: {
           email: sanitizedEmail,
           name: sanitizeString(name) || sanitizedEmail.split('@')[0],
-          specialties: toJsonString(Array.isArray(profile?.especialidades) ? profile.especialidades : []),
-          profile: toJsonString(profile),
+          specialties: Array.isArray(profile?.especialidades) ? profile.especialidades : [],
+          profile: profile ?? null,
           photoUrl: profile?.photoUrl ? sanitizeString(profile.photoUrl) : null,
           license: profile?.crp ? sanitizeString(profile.crp) : null,
           bio: profile?.bio ? sanitizeString(profile.bio) : null,
@@ -139,7 +138,7 @@ export async function POST(req: NextRequest) {
         name: created.name,
         type: 'profissional',
         role: 'USER',
-        profile: fromJsonString(created.profile as string) ?? {},
+        profile: (created.profile as any) ?? {},
         token
       }, { status: 201 });
     }
@@ -151,7 +150,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Registration error:', error);
-    
+
     // Check if it's a JSON parsing error
     if (error instanceof SyntaxError) {
       return NextResponse.json(
@@ -161,7 +160,7 @@ export async function POST(req: NextRequest) {
     }
 
     const prismaError = handlePrismaError(error);
-    
+
     if (prismaError.code === 'UNIQUE_CONSTRAINT_VIOLATION') {
       return NextResponse.json(
         { error: prismaError.message },

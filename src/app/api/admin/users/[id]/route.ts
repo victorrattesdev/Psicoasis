@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { fromJsonString, toJsonString } from '@/lib/json-utils';
 import { requireAdmin } from '@/lib/auth';
 
 // Helper to locate record and infer type
@@ -22,27 +21,27 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (found.type === 'paciente') {
       const u = found.record as any;
-      return NextResponse.json({ 
-        id: u.id, 
-        name: u.name ?? '', 
-        email: u.email, 
-        type: 'paciente', 
-        role: u.role, 
-        createdAt: u.createdAt, 
-        updatedAt: u.updatedAt, 
-        profile: fromJsonString(u.profile) ?? {} 
+      return NextResponse.json({
+        id: u.id,
+        name: u.name ?? '',
+        email: u.email,
+        type: 'paciente',
+        role: u.role,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+        profile: (u.profile as any) ?? {}
       });
     }
     const t = found.record as any;
-    return NextResponse.json({ 
-      id: t.id, 
-      name: t.name, 
-      email: t.email, 
-      type: 'profissional', 
-      role: 'USER', 
-      createdAt: t.createdAt, 
-      updatedAt: t.updatedAt, 
-      profile: fromJsonString(t.profile) ?? {},
+    return NextResponse.json({
+      id: t.id,
+      name: t.name,
+      email: t.email,
+      type: 'profissional',
+      role: 'USER',
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      profile: (t.profile as any) ?? {},
       photoUrl: t.photoUrl ?? null
     });
   } catch {
@@ -62,23 +61,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (found.type === 'paciente') {
-      // Update user; allow role toggle
       const updated = await prisma.user.update({
         where: { id },
         data: {
           name: name ?? undefined,
           email: email ?? undefined,
           role: role ?? undefined,
-          profile: profile ? toJsonString(profile) : undefined,
+          profile: profile ?? undefined,
         },
       });
-      return NextResponse.json({ 
-        id: updated.id, 
-        name: updated.name ?? '', 
-        email: updated.email, 
-        type: 'paciente', 
-        role: updated.role, 
-        profile: fromJsonString(updated.profile as string) ?? {} 
+      return NextResponse.json({
+        id: updated.id,
+        name: updated.name ?? '',
+        email: updated.email,
+        type: 'paciente',
+        role: updated.role,
+        profile: (updated.profile as any) ?? {}
       });
     }
 
@@ -86,23 +84,23 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const updateData: Record<string, any> = {
       name: name ?? undefined,
       email: email ?? undefined,
-      profile: profile ? toJsonString(profile) : undefined,
+      profile: profile ?? undefined,
       photoUrl: photoUrl ?? undefined,
     };
     if (Array.isArray(profile?.especialidades)) {
-      updateData.specialties = toJsonString(profile.especialidades);
+      updateData.specialties = profile.especialidades;
     }
     const updatedT = await prisma.therapist.update({
       where: { id },
       data: updateData,
     });
-    return NextResponse.json({ 
-      id: updatedT.id, 
-      name: updatedT.name, 
-      email: updatedT.email, 
-      type: 'profissional', 
-      role: 'USER', 
-      profile: fromJsonString(updatedT.profile as string) ?? {},
+    return NextResponse.json({
+      id: updatedT.id,
+      name: updatedT.name,
+      email: updatedT.email,
+      type: 'profissional',
+      role: 'USER',
+      profile: (updatedT.profile as any) ?? {},
       photoUrl: updatedT.photoUrl ?? null
     });
   } catch (error: any) {
@@ -122,7 +120,6 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     const found = await findUserOrTherapistById(id);
     if (!found) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (found.type === 'paciente') {
-      // Never delete admin
       const user = found.record as any;
       if (user.role === 'ADMIN') return NextResponse.json({ error: 'Cannot delete admin' }, { status: 400 });
       await prisma.user.delete({ where: { id } });
@@ -134,5 +131,3 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
 }
-
-
