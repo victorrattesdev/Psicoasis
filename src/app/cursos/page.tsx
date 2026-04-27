@@ -18,7 +18,7 @@ type CourseSection = {
 };
 
 export default function CursosPage() {
-  const whatsappNumber = "5521995782684";
+  const whatsappNumber = "5522998687622";
   const buildWhatsappPurchaseLink = (topicLabel: string) =>
     `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       `Olá, eu desejo adquirir o curso *${topicLabel}*.`

@@ -110,7 +110,7 @@ export default function PsicologosPage() {
   };
 
   const getWhatsappLink = (therapistName: string) => {
-    const digits = "5521995782684";
+    const digits = "5522998687622";
     const message = `Olá, gostaria de agendar uma consulta com o ${therapistName}.`;
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   };

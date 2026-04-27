@@ -120,7 +120,7 @@ function NeuroWelcomeHero({ scheduleHref }: { scheduleHref: string }) {
 
 export default function AvaliacaoNeuropsicologicaPage() {
   const hotmartUrl = "https://pay.hotmart.com/SEU-CODIGO";
-  const whatsappNumber = "5521995782684";
+  const whatsappNumber = "5522998687622";
   const whatsappPurchaseLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Olá, eu gostaria de saber mais e efetuar a compra da minha avaliação neuropsicológica."
   )}`;
