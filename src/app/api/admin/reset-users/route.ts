@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
-import { toJsonString } from '@/lib/json-utils';
 import { requireAdmin } from '@/lib/auth';
 
 const ADMIN_EMAIL = 'admin@admin.com';
@@ -39,11 +38,11 @@ export async function POST(req: NextRequest) {
           email: ADMIN_EMAIL,
           name: 'Admin OASIS da Superdotação',
           role: 'ADMIN',
-          profile: toJsonString({
+          profile: {
             isAdmin: true,
             isDefault: true,
             createdAt: new Date().toISOString()
-          })
+          }
         }
       });
     } else {
@@ -52,11 +51,11 @@ export async function POST(req: NextRequest) {
         where: { id: admin.id },
         data: {
           role: 'ADMIN',
-          profile: toJsonString({
+          profile: {
             isAdmin: true,
             isDefault: true,
             updatedAt: new Date().toISOString()
-          })
+          }
         }
       });
     }

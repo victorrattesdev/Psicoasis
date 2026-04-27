@@ -1,29 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma, handlePrismaError } from '@/lib/db';
-import { validateEmail, validateName, sanitizeEmail, sanitizeString } from '@/lib/validations';
+import {
+  validateEmail,
+  validateName,
+  validatePassword,
+  sanitizeEmail,
+  sanitizeString
+} from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, name, type, profile } = body as {
+    const { email, password, name, type, profile } = body as {
       email: string;
+      password: string;
       name?: string;
       type: 'paciente' | 'profissional';
       profile?: any
     };
 
-    console.log('Registration attempt:', { email, type, hasName: !!name });
-
-    // Validate required fields
-    if (!email || !type) {
+    if (!email || !type || !password) {
       return NextResponse.json(
-        { error: 'Email e tipo de usuário são obrigatórios' },
+        { error: 'Email, senha e tipo de usuário são obrigatórios' },
         { status: 400 }
       );
     }
 
-    // Validate email
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) {
       return NextResponse.json(
@@ -32,9 +36,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        { error: passwordValidation.error },
+        { status: 400 }
+      );
+    }
+
     const sanitizedEmail = sanitizeEmail(email);
 
-    // Check if email already exists in either table
     const [existingUser, existingTherapist] = await Promise.all([
       prisma.user.findFirst({ where: { email: sanitizedEmail } }),
       prisma.therapist.findFirst({ where: { email: sanitizedEmail } })
@@ -47,8 +58,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const passwordHash = await bcrypt.hash(password, 12);
+
     if (type === 'paciente') {
-      // Validate name for patients
       if (!name || name.trim().length === 0) {
         return NextResponse.json(
           { error: 'Nome é obrigatório' },
@@ -68,6 +80,7 @@ export async function POST(req: NextRequest) {
         data: {
           email: sanitizedEmail,
           name: sanitizeString(name) || null,
+          password: passwordHash,
           profile: profile ?? null,
           role: 'USER'
         }
@@ -92,9 +105,7 @@ export async function POST(req: NextRequest) {
       }, { status: 201 });
     }
 
-    // Professional registration
     if (type === 'profissional') {
-      // Validate name for professionals
       if (!name || name.trim().length === 0) {
         return NextResponse.json(
           { error: 'Nome é obrigatório' },
@@ -114,6 +125,7 @@ export async function POST(req: NextRequest) {
         data: {
           email: sanitizedEmail,
           name: sanitizeString(name) || sanitizedEmail.split('@')[0],
+          password: passwordHash,
           specialties: Array.isArray(profile?.especialidades) ? profile.especialidades : [],
           profile: profile ?? null,
           photoUrl: profile?.photoUrl ? sanitizeString(profile.photoUrl) : null,
@@ -151,7 +163,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('Registration error:', error);
 
-    // Check if it's a JSON parsing error
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { error: 'Erro ao processar os dados. Verifique o formato da requisição.' },
@@ -168,7 +179,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check for database connection errors
     if (error && typeof error === 'object' && 'message' in error) {
       const errorMessage = (error as Error).message;
       if (errorMessage.includes('datasource') || errorMessage.includes('DATABASE_URL')) {

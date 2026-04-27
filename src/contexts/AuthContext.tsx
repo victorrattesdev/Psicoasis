@@ -34,7 +34,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, userType: 'paciente' | 'profissional') => Promise<boolean>;
   loginAdmin: (email: string, password: string) => Promise<boolean>;
-  register: (userData: Omit<User, 'id'>) => Promise<boolean>;
+  register: (userData: Omit<User, 'id'>, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -73,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Check if user is logged in on app start
     const savedToken = localStorage.getItem('psicoasis_token');
     if (savedToken) {
       const tokenUser = getUserFromToken(savedToken);
@@ -81,12 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(tokenUser);
       } else {
         localStorage.removeItem('psicoasis_token');
-      }
-    }
-    if (!savedToken) {
-      const savedUser = localStorage.getItem('psicoasis_user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        localStorage.removeItem('psicoasis_user');
       }
     }
     setIsLoading(false);
@@ -98,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: userType })
+        body: JSON.stringify({ email, password, type: userType })
       });
       if (!res.ok) {
         setIsLoading(false);
@@ -146,15 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (userData: Omit<User, 'id'>): Promise<boolean> => {
+  const register = async (userData: Omit<User, 'id'>, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: userData.email, 
-          name: userData.name, 
+        body: JSON.stringify({
+          email: userData.email,
+          password,
+          name: userData.name,
           type: userData.type,
           profile: {
             telefone: userData.telefone,

@@ -12,7 +12,7 @@ interface Post {
   excerpt: string | null;
   coverImage: string | null;
   category: string | null;
-  publishedAt: Date;
+  publishedAt: Date | null;
   authorUser: { name: string | null; email: string } | null;
   authorTherapist: { name: string; email: string } | null;
 }
@@ -129,7 +129,7 @@ export default function BlogPostClient({ post }: { post: Post }) {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">{author}</p>
-                  <p>{new Date(post.publishedAt).toLocaleDateString('pt-BR')}</p>
+                  <p>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR') : ''}</p>
                 </div>
               </div>
               <div className="flex items-center">

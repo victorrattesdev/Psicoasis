@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
@@ -6,20 +7,19 @@ import { signUserToken } from '@/lib/jwt';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, type } = body as { 
-      email: string; 
-      type: 'paciente' | 'profissional' 
+    const { email, password, type } = body as {
+      email: string;
+      password: string;
+      type: 'paciente' | 'profissional'
     };
 
-    // Validate required fields
-    if (!email || !type) {
+    if (!email || !password || !type) {
       return NextResponse.json(
-        { error: 'Email e tipo de usuário são obrigatórios' },
+        { error: 'Email, senha e tipo de usuário são obrigatórios' },
         { status: 400 }
       );
     }
 
-    // Validate email format
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) {
       return NextResponse.json(
@@ -31,11 +31,19 @@ export async function POST(req: NextRequest) {
     const sanitizedEmail = sanitizeEmail(email);
 
     if (type === 'paciente') {
-      const user = await prisma.user.findFirst({ 
+      const user = await prisma.user.findFirst({
         where: { email: sanitizedEmail }
       });
 
-      if (!user) {
+      if (!user || !user.password) {
+        return NextResponse.json(
+          { error: 'Email ou senha incorretos' },
+          { status: 401 }
+        );
+      }
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
         return NextResponse.json(
           { error: 'Email ou senha incorretos' },
           { status: 401 }
@@ -64,11 +72,19 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'profissional') {
-      const therapist = await prisma.therapist.findFirst({ 
+      const therapist = await prisma.therapist.findFirst({
         where: { email: sanitizedEmail }
       });
 
-      if (!therapist) {
+      if (!therapist || !therapist.password) {
+        return NextResponse.json(
+          { error: 'Email ou senha incorretos' },
+          { status: 401 }
+        );
+      }
+
+      const valid = await bcrypt.compare(password, therapist.password);
+      if (!valid) {
         return NextResponse.json(
           { error: 'Email ou senha incorretos' },
           { status: 401 }
@@ -106,7 +122,7 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const prismaError = handlePrismaError(error);
     console.error('Login error:', error);
-    
+
     return NextResponse.json(
       { error: prismaError.message || 'Erro ao fazer login. Tente novamente.' },
       { status: 500 }

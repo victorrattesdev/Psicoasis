@@ -156,7 +156,7 @@ export default function PacienteRegistroPage() {
         cep: formData.cep
       };
 
-      const success = await register(userData);
+      const success = await register(userData, formData.senha);
       
       if (success) {
         // Redirect will happen automatically via useEffect

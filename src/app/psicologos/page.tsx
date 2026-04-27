@@ -24,6 +24,7 @@ export default function PsicologosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedApproach, setSelectedApproach] = useState("");
+  const [selectedServiceType, setSelectedServiceType] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTherapist, setSelectedTherapist] = useState<PublicTherapist | null>(null);

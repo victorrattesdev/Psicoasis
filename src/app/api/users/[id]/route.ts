@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, name: true, email: true, profile: true, role: true }
     });
     if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -22,13 +23,14 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const incomingProfile = body?.profile ?? {};
 
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, role: true, profile: true }
     });
     if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -47,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const nextProfile = { ...existingProfile, ...allowed };
 
     await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: { profile: nextProfile }
     });
 

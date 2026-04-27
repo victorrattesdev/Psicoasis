@@ -140,7 +140,7 @@ export default async function Home() {
                   Nossa comunidade se sustenta em três pilares fundamentais:
                 </p>
                 <p>
-                  1. Validação da Identidade: Ser "diferente" é a norma; sua trajetória é única.
+                  1. Validação da Identidade: Ser &ldquo;diferente&rdquo; é a norma; sua trajetória é única.
                 </p>
                 <p>
                   2. Amizades Saudáveis: Conexões reais com pessoas que compartilham sua intensidade
@@ -153,8 +153,8 @@ export default async function Home() {
               </div>
 
               <p className="mt-6 text-gray-900 font-semibold italic">
-                "Sua mente não precisa caminhar sozinha. Encontre clareza, tratamento e comunidade em
-                um só lugar."
+                &ldquo;Sua mente não precisa caminhar sozinha. Encontre clareza, tratamento e comunidade em
+                um só lugar.&rdquo;
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">

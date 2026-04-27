@@ -37,11 +37,27 @@ export function validatePassword(password: string): { valid: boolean; error?: st
   if (!password || password.length === 0) {
     return { valid: false, error: 'Senha é obrigatória' }
   }
-  
-  if (password.length < 6) {
-    return { valid: false, error: 'Senha deve ter pelo menos 6 caracteres' }
+
+  if (password.length < 6 || password.length > 20) {
+    return { valid: false, error: 'Senha deve ter entre 6 e 20 caracteres' }
   }
-  
+
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Senha deve conter pelo menos uma letra minúscula' }
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Senha deve conter pelo menos uma letra maiúscula' }
+  }
+
+  if (!/\d/.test(password)) {
+    return { valid: false, error: 'Senha deve conter pelo menos um número' }
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return { valid: false, error: 'Senha deve conter pelo menos um caractere especial' }
+  }
+
   return { valid: true }
 }
 

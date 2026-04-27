@@ -19,6 +19,8 @@ export default function PacienteDashboard() {
     estado?: string;
     cep?: string;
     photoUrl?: string;
+    cursosLiberado?: boolean;
+    avaliacaoNeuropsicologicaLiberada?: boolean;
   } | null>(null);
   const [profileForm, setProfileForm] = useState({
     cep: "",

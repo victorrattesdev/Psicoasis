@@ -156,7 +156,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
     }
 
     if (!hasPermission) {
-      console.error('Permission denied:', { userId, therapistId, existing, slug: params.slug });
+      console.error('Permission denied:', { userId, therapistId, existing, slug });
       return NextResponse.json({ error: 'Não autorizado: Você não tem permissão para editar este post' }, { status: 403 });
     }
 
@@ -190,7 +190,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
     }
 
     if (title) {
-      let newSlug = slugify(title);
+      const newSlug = slugify(title);
       try {
         const slugExists = await (prisma.post as any).findMany({ 
           where: { slug: newSlug },

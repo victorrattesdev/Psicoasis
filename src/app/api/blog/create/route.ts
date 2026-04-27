@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { toJsonString } from '@/lib/json-utils';
 
 function slugify(text: string): string {
   return text
@@ -137,11 +136,11 @@ export async function POST(req: NextRequest) {
               email: adminEmail,
               name: 'Admin OASIS',
               role: 'ADMIN',
-              profile: toJsonString({
+              profile: {
                 isAdmin: true,
                 isDefault: true,
                 createdAt: new Date().toISOString()
-              })
+              }
             }
           });
         }

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash, timingSafeEqual } from 'crypto';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
+
+const sha256 = (s: string) => createHash('sha256').update(s).digest();
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,8 +29,12 @@ export async function POST(req: NextRequest) {
     }
 
     const sanitizedEmail = sanitizeEmail(email);
+    const expectedEmail = sanitizeEmail(adminEmail);
 
-    if (sanitizedEmail !== adminEmail || password !== adminPassword) {
+    const emailOk = timingSafeEqual(sha256(sanitizedEmail), sha256(expectedEmail));
+    const passwordOk = timingSafeEqual(sha256(password), sha256(adminPassword));
+
+    if (!emailOk || !passwordOk) {
       return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 });
     }
 

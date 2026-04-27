@@ -1,5 +1,4 @@
 import { prisma } from './db';
-import { toJsonString } from './json-utils';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 
@@ -28,11 +27,11 @@ export async function initializeDatabase() {
         email: ADMIN_EMAIL,
         name: 'Admin OASIS da Superdotação',
         role: 'ADMIN',
-        profile: toJsonString({
+        profile: {
           isAdmin: true,
           isDefault: true,
           createdAt: new Date().toISOString()
-        })
+        }
       }
     });
 

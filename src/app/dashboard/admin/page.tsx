@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 type ActivityItem = {
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     return `há ${years} ${years === 1 ? "ano" : "anos"}`;
   };
 
-  const activityMeta: Record<ActivityItem["type"], { bg: string; text: string; icon: JSX.Element }> = {
+  const activityMeta: Record<ActivityItem["type"], { bg: string; text: string; icon: ReactElement }> = {
     post: {
       bg: "bg-green-100",
       text: "text-green-600",

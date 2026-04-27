@@ -66,7 +66,7 @@ export default function AdminBlogPage() {
   const filteredPosts = posts.filter(post => {
     const matchesFilter = filter === "all" || post.status === filter;
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+                         (post.excerpt ?? "").toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 

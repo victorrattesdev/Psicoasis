@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
           const displayName = user.name?.trim() || user.email || 'Paciente';
           return {
             id: user.id,
-            type: 'user',
+            type: 'user' as const,
             title: 'Novo paciente cadastrado',
             description: `${displayName} se registrou como paciente.`,
             createdAt: user.createdAt.toISOString()
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
             : `${displayName} teve o cadastro atualizado.`;
           return {
             id: `${user.id}-update`,
-            type: 'user',
+            type: 'user' as const,
             title,
             description,
             createdAt: user.updatedAt.toISOString()
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
         const displayName = therapist.name?.trim() || 'Profissional';
         return {
           id: therapist.id,
-          type: 'therapist',
+          type: 'therapist' as const,
           title: 'Novo psicólogo cadastrado',
           description: `${displayName} se registrou como psicólogo.`,
           createdAt: therapist.createdAt.toISOString()
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
           const statusText = therapist.approved ? 'aprovado' : 'pendente';
           return {
             id: `${therapist.id}-update`,
-            type: 'therapist',
+            type: 'therapist' as const,
             title: 'Status de psicólogo atualizado',
             description: `${displayName} está com status ${statusText}.`,
             createdAt: therapist.updatedAt.toISOString()
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
         const publishedAt = post.publishedAt ?? post.createdAt;
         return {
           id: post.id,
-          type: 'post',
+          type: 'post' as const,
           title: 'Novo post publicado',
           description: `"${post.title}" foi publicado.`,
           createdAt: publishedAt.toISOString()

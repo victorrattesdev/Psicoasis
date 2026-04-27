@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sanitizeEmail, validateEmail } from "@/lib/validations";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const therapist = await prisma.therapist.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { profile: true }
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -33,8 +34,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const { email } = body as { email?: string };
     if (!email) {
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const therapist = await prisma.therapist.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { profile: true }
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     patientIds.push(user.id);
 
     await prisma.therapist.update({
-      where: { id: params.id },
+      where: { id },
       data: { profile: { ...profile, patientIds } }
     });
 
@@ -88,8 +90,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const { patientId } = body as { patientId?: string };
     if (!patientId) {
@@ -97,17 +100,17 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     const therapist = await prisma.therapist.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { profile: true }
     });
     if (!therapist) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const profile = (therapist.profile as any) ?? {};
     const patientIds = Array.isArray(profile?.patientIds) ? profile.patientIds : [];
-    const nextPatientIds = patientIds.filter((id: string) => id !== patientId);
+    const nextPatientIds = patientIds.filter((pid: string) => pid !== patientId);
 
     await prisma.therapist.update({
-      where: { id: params.id },
+      where: { id },
       data: { profile: { ...profile, patientIds: nextPatientIds } }
     });
 
