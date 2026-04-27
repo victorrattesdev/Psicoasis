@@ -390,7 +390,9 @@ export default async function Home() {
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-white">
                   <li>Estudante de Psicologia / UFF-RJ</li>
-                  <li>Entusiasta das Altas Habilidades e Superdotação</li>
+                  <li>Especializando-se em Superdotação</li>
+                  <li>Especializando-se em Neuropsicologia</li>
+                  <li><a href="https://lattes.cnpq.br/9349827371280775" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">Lattes (acadêmico)</a></li>
                 </ul>
               </div>
             </article>
