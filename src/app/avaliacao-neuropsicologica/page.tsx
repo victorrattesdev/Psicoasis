@@ -2,6 +2,7 @@
 
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -120,7 +121,7 @@ function NeuroWelcomeHero({ scheduleHref }: { scheduleHref: string }) {
 
 export default function AvaliacaoNeuropsicologicaPage() {
   const hotmartUrl = "https://pay.hotmart.com/SEU-CODIGO";
-  const whatsappNumber = "5522998687622";
+  const whatsappNumber = WHATSAPP_NUMBER;
   const whatsappPurchaseLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     "Olá, eu gostaria de saber mais e efetuar a compra da minha avaliação neuropsicológica."
   )}`;

@@ -2,6 +2,7 @@
 
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { useEffect, useState } from "react";
 
 type CourseVideo = {
@@ -18,7 +19,7 @@ type CourseSection = {
 };
 
 export default function CursosPage() {
-  const whatsappNumber = "5522998687622";
+  const whatsappNumber = WHATSAPP_NUMBER;
   const buildWhatsappPurchaseLink = (topicLabel: string) =>
     `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       `Olá, eu desejo adquirir o curso *${topicLabel}*.`
