@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface BlogPost {
   id: string;
@@ -15,13 +15,15 @@ interface BlogPost {
   author: string;
 }
 
+const BASE_CATEGORIES = ["Todos", "Autismo", "Neuropsicologia", "Superdotação", "Saúde Mental", "Adolescentes", "Bem-estar", "Família", "Altas Habilidades"];
+const PINNED_CATEGORIES = ["Todos", "Autismo", "Neuropsicologia", "Superdotação"];
+
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const baseCategories = ["Todos", "Autismo", "Neuropsicologia", "Superdotação", "Saúde Mental", "Adolescentes", "Bem-estar", "Família", "Altas Habilidades"];
-  const [categoryOptions, setCategoryOptions] = useState<string[]>(baseCategories);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(BASE_CATEGORIES);
 
   useEffect(() => {
     const load = async () => {
@@ -52,16 +54,20 @@ export default function BlogPage() {
     load();
   }, [selectedCategory]);
 
-  const pinnedCategories = ["Todos", "Autismo", "Neuropsicologia", "Superdotação"];
-  const visibleCategories = pinnedCategories;
-  const overflowCategories = categoryOptions.filter((category) => !pinnedCategories.includes(category));
+  const overflowCategories = categoryOptions.filter((c) => !PINNED_CATEGORIES.includes(c));
 
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = searchTerm === "" || 
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (post.excerpt && post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
-  });
+  const filteredPosts = useMemo(
+    () =>
+      posts.filter((post) => {
+        if (searchTerm === "") return true;
+        const term = searchTerm.toLowerCase();
+        return (
+          post.title.toLowerCase().includes(term) ||
+          (post.excerpt?.toLowerCase().includes(term) ?? false)
+        );
+      }),
+    [posts, searchTerm]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -104,7 +110,7 @@ export default function BlogPage() {
             {/* Category Filter */}
             <div className="w-full md:flex-1 flex items-center gap-3 md:justify-end overflow-hidden">
               <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-                {visibleCategories.map((category) => (
+                {PINNED_CATEGORIES.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}

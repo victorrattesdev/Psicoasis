@@ -20,6 +20,7 @@ export default function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "#") return false;
@@ -99,7 +100,7 @@ export default function SiteHeader() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-2 whitespace-nowrap" suppressHydrationWarning>
+          <div className="hidden md:flex items-center gap-2 whitespace-nowrap" suppressHydrationWarning>
             {user ? (
               <div className="flex items-center gap-3">
                 {dashboardHref && (
@@ -154,24 +155,85 @@ export default function SiteHeader() {
             )}
           </div>
           <div className="md:hidden">
-            <button className="text-white hover:text-white/80">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
+            <button
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="text-white hover:text-white/80"
+              aria-label="Abrir menu"
+            >
+              {menuOpen ? (
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="md:hidden bg-gray-900 border-t border-gray-700 px-4 py-3 flex flex-col gap-2">
+          {navLinks.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className={`block px-3 py-2 text-[14px] font-medium transition-colors border-l-2 ${
+                isActive(link.href)
+                  ? "text-white border-[#b8860b]"
+                  : "text-white/70 border-transparent hover:text-white hover:border-white/30"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="border-t border-gray-700 pt-3 mt-1 flex flex-col gap-2">
+            {user ? (
+              <>
+                {dashboardHref && (
+                  <Link
+                    href={dashboardHref}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Painel
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                    router.replace("/");
+                  }}
+                  className="text-left px-3 py-2 rounded-md text-[14px] font-medium text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-3 py-2 rounded-md text-[14px] font-bold text-[#b8860b] border border-[#b8860b] text-center"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/registro"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-3 py-2 rounded-md text-[14px] font-bold bg-[#b8860b] text-black text-center"
+                >
+                  Registrar
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

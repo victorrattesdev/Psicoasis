@@ -18,23 +18,39 @@ type CourseSection = {
   videos: CourseVideo[];
 };
 
-export default function CursosPage() {
-  const whatsappNumber = WHATSAPP_NUMBER;
-  const buildWhatsappPurchaseLink = (topicLabel: string) =>
-    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-      `Olá, eu desejo adquirir o curso *${topicLabel}*.`
-    )}`;
-  const { user } = useAuth();
-  const [courseAccess, setCourseAccess] = useState<{ monthly: boolean; topics: string[] }>({
-    monthly: false,
-    topics: []
-  });
-  const [isAccessLoading, setIsAccessLoading] = useState(false);
-  const isPatient = user?.type === "paciente";
-  const isAdmin = user?.role === "ADMIN";
-  const isProfessional = user?.type === "profissional";
-  const isCheckingAccess = isPatient && isAccessLoading;
-  const defaultSections: CourseSection[] = [
+const buildWhatsappPurchaseLink = (topicLabel: string) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    `Olá, eu desejo adquirir o curso *${topicLabel}*.`
+  )}`;
+
+const toSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+const extractYoutubeId = (url?: string) => {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/i
+  );
+  return match?.[1] ?? null;
+};
+
+const formatDurationInput = (value: string) => {
+  const digitsOnly = value.replace(/\D/g, "").slice(0, 6);
+  if (digitsOnly.length <= 2) return digitsOnly;
+  if (digitsOnly.length <= 4) return `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2)}`;
+  return `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2, 4)}:${digitsOnly.slice(4)}`;
+};
+
+const defaultSections: CourseSection[] = [
     {
       id: "introducao",
       label: "Introdução",
@@ -104,7 +120,19 @@ export default function CursosPage() {
         },
       ],
     },
-  ];
+];
+
+export default function CursosPage() {
+  const { user } = useAuth();
+  const [courseAccess, setCourseAccess] = useState<{ monthly: boolean; topics: string[] }>({
+    monthly: false,
+    topics: [],
+  });
+  const [isAccessLoading, setIsAccessLoading] = useState(false);
+  const isPatient = user?.type === "paciente";
+  const isAdmin = user?.role === "ADMIN";
+  const isProfessional = user?.type === "profissional";
+  const isCheckingAccess = isPatient && isAccessLoading;
   const [sections, setSections] = useState<CourseSection[]>(defaultSections);
   const [activeSectionId, setActiveSectionId] = useState(sections[0]?.id ?? "");
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
@@ -203,27 +231,6 @@ export default function CursosPage() {
     courseAccess.monthly ||
     (activeSection?.id ? courseAccess.topics.includes(activeSection.id) : false);
 
-  const toSlug = (value: string) =>
-    value
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
-
-  const extractYoutubeId = (url?: string) => {
-    if (!url) return null;
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-    const match = trimmed.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/i
-    );
-    return match?.[1] ?? null;
-  };
-
-
   const handleAddSection = () => {
     const label = newSectionLabel.trim();
     if (!label) return;
@@ -235,17 +242,6 @@ export default function CursosPage() {
     setActiveSectionId(id);
     setActiveVideoIndex(0);
     setNewSectionLabel("");
-  };
-
-  const formatDurationInput = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, "").slice(0, 6);
-    if (digitsOnly.length <= 2) {
-      return digitsOnly;
-    }
-    if (digitsOnly.length <= 4) {
-      return `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2)}`;
-    }
-    return `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2, 4)}:${digitsOnly.slice(4)}`;
   };
 
   const handleDeleteSection = (sectionId: string) => {

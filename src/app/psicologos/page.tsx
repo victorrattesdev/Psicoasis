@@ -19,6 +19,76 @@ interface PublicTherapist {
   approaches?: string[];
 }
 
+function normalizeListValue(value: any): string[] {
+  if (Array.isArray(value))
+    return value.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed))
+        return parsed.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean);
+    } catch {}
+    return trimmed.split(/[,;|]/).map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function getDisplaySpecialties(therapist: PublicTherapist) {
+  const primary = normalizeListValue(therapist.specialties);
+  if (primary.length) return primary;
+  return normalizeListValue(therapist.profile?.especialidades);
+}
+
+function getDisplayApproaches(therapist: PublicTherapist) {
+  return normalizeListValue(therapist.profile?.abordagens ?? therapist.profile?.abordagem);
+}
+
+function getServiceTypes(therapist: PublicTherapist) {
+  const online = Boolean(therapist.profile?.aceitaOnline);
+  const presencial = Boolean(therapist.profile?.aceitaPresencial);
+  const types: string[] = [];
+  if (online) types.push("Online");
+  if (presencial) types.push("Presencial");
+  return types.length ? types : ["Nao informado"];
+}
+
+function getWhatsappLink(therapistName: string) {
+  const message = `Olá, gostaria de agendar uma consulta com o ${therapistName}.`;
+  return `https://wa.me/5522998687622?text=${encodeURIComponent(message)}`;
+}
+
+function formatDate(value?: string) {
+  if (!value) return "Nao informado";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function renderProfileValue(value: any) {
+  if (value === null || value === undefined || value === "") return "Nao informado";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "Nao informado";
+  if (typeof value === "object") {
+    const entries = Object.entries(value).filter(
+      ([key]) => !["especialidades", "abordagens", "abordagem", "crp"].includes(key.toLowerCase())
+    );
+    if (!entries.length) return "Nao informado";
+    return (
+      <div className="space-y-2">
+        {entries.map(([key, entryValue]) => (
+          <div key={key} className="text-sm text-gray-600">
+            <span className="font-medium text-gray-700">{key}:</span>{" "}
+            {Array.isArray(entryValue) ? entryValue.join(", ") : String(entryValue ?? "Nao informado")}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return String(value);
+}
+
 export default function PsicologosPage() {
   const [therapists, setTherapists] = useState<PublicTherapist[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,125 +105,19 @@ export default function PsicologosPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/therapists/public', { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error('Erro ao carregar psicólogos');
-        }
+        const res = await fetch("/api/therapists/public", { cache: "no-store" });
+        if (!res.ok) throw new Error("Erro ao carregar psicólogos");
         const data = await res.json();
         const therapistsList = Array.isArray(data?.therapists) ? data.therapists : [];
         setTherapists(therapistsList);
-        console.log(`✅ Carregados ${therapistsList.length} psicólogo(s) aprovado(s)`);
       } catch (err) {
-        console.error('Erro ao carregar psicólogos:', err);
-        setError('Erro ao carregar psicólogos. Tente novamente mais tarde.');
+        setError("Erro ao carregar psicólogos. Tente novamente mais tarde.");
       } finally {
         setIsLoading(false);
       }
     };
     load();
-
-    return () => {
-      setSearchTerm("");
-      setSelectedSpecialty("");
-      setSelectedApproach("");
-    };
   }, []);
-
-  const normalizeListValue = (value: any): string[] => {
-    if (Array.isArray(value)) {
-      return value
-        .map((item) => (typeof item === "string" ? item.trim() : ""))
-        .filter(Boolean);
-    }
-
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (!trimmed) return [];
-
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) {
-          return parsed
-            .map((item) => (typeof item === "string" ? item.trim() : ""))
-            .filter(Boolean);
-        }
-      } catch {
-        // fall back to splitting below
-      }
-
-      return trimmed
-        .split(/[,;|]/)
-        .map((item) => item.trim())
-        .filter(Boolean);
-    }
-
-    return [];
-  };
-
-  const getDisplaySpecialties = (therapist: PublicTherapist) => {
-    const primary = normalizeListValue(therapist.specialties);
-    if (primary.length) return primary;
-    return normalizeListValue(therapist.profile?.especialidades);
-  };
-
-  const getDisplayApproaches = (therapist: PublicTherapist) => {
-    return normalizeListValue(therapist.profile?.abordagens ?? therapist.profile?.abordagem);
-  };
-
-  const getServiceTypes = (therapist: PublicTherapist) => {
-    const online = Boolean(therapist.profile?.aceitaOnline);
-    const presencial = Boolean(therapist.profile?.aceitaPresencial);
-    const types: string[] = [];
-    if (online) types.push("Online");
-    if (presencial) types.push("Presencial");
-    return types.length ? types : ["Nao informado"];
-  };
-
-  const getWhatsappLink = (therapistName: string) => {
-    const digits = "5522998687622";
-    const message = `Olá, gostaria de agendar uma consulta com o ${therapistName}.`;
-    return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-  };
-
-
-  const formatDate = (value?: string) => {
-    if (!value) return "Nao informado";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("pt-BR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const renderProfileValue = (value: any) => {
-    if (value === null || value === undefined || value === "") {
-      return "Nao informado";
-    }
-    if (Array.isArray(value)) {
-      return value.length ? value.join(", ") : "Nao informado";
-    }
-    if (typeof value === "object") {
-      const entries = Object.entries(value).filter(
-        ([key]) => !["especialidades", "abordagens", "abordagem", "crp"].includes(key.toLowerCase())
-      );
-      if (!entries.length) return "Nao informado";
-      return (
-        <div className="space-y-2">
-          {entries.map(([key, entryValue]) => (
-            <div key={key} className="text-sm text-gray-600">
-              <span className="font-medium text-gray-700">{key}:</span>{" "}
-              {Array.isArray(entryValue)
-                ? entryValue.join(", ")
-                : String(entryValue ?? "Nao informado")}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return String(value);
-  };
 
   useEffect(() => {
     if (!isModalOpen) return;

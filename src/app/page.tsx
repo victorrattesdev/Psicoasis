@@ -3,25 +3,22 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import SiteFooter from "@/components/SiteFooter";
 
-export default async function Home() {
-  const faqItems = [
-    {
-      title: "1. A avaliação é on-line?",
-      body:
-        "Sim. A avaliação pode ser realizada de forma on-line com método estruturado e instrumentos adequados.",
-    },
-    {
-      title: "2. Quantas sessões são necessárias?",
-      body:
-        "O processo envolve entrevista inicial, sessões de avaliação e devolutiva.",
-    },
-    {
-      title: "3. A avaliação confirma se a pessoa é superdotada?",
-      body:
-        "Sim. A avaliação investiga indicadores de altas habilidades, compreende o perfil cognitivo e orienta os próximos passos."   
-    },
+const faqItems = [
+  {
+    title: "1. A avaliação é on-line?",
+    body: "Sim. A avaliação pode ser realizada de forma on-line com método estruturado e instrumentos adequados.",
+  },
+  {
+    title: "2. Quantas sessões são necessárias?",
+    body: "O processo envolve entrevista inicial, sessões de avaliação e devolutiva.",
+  },
+  {
+    title: "3. A avaliação confirma se a pessoa é superdotada?",
+    body: "Sim. A avaliação investiga indicadores de altas habilidades, compreende o perfil cognitivo e orienta os próximos passos.",
+  },
+];
 
-  ];
+export default async function Home() {
   let approvedTherapistsCount = 0;
 
   try {
@@ -198,11 +195,10 @@ export default async function Home() {
                   Ela envolve características como:
                   </strong>
 
-                  <br /><br />
-                
+                </p>
 
                 {/* Lista */}
-                <ul className="space-y-2 text-sm text-gray-300">
+                <ul className="space-y-2 text-sm text-gray-300 mt-3">
                   <li className="flex items-start gap-2">
                     <span className="text-[#C9A44C]">●</span>
                     Raciocínio rápido
@@ -222,22 +218,20 @@ export default async function Home() {
                   <li className="flex items-start gap-2">
                     <span className="text-[#C9A44C]">●</span>
                     Criatividade elevada
-
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#C9A44C]">●</span>
                     Grande interesse por determinados temas
-                    
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#C9A44C]">●</span>
                     Intensidade intelectual ou emocional
                   </li>
                 </ul>
-                <br /><br />
-                A avaliação permite compreender se essas características fazem parte de um perfil de altas habilidades.. 
-                  <br /><br />
-                  </p>
+
+                <p className="text-sm text-gray-300 leading-relaxed mt-3">
+                  A avaliação permite compreender se essas características fazem parte de um perfil de altas habilidades.
+                </p>
               </div>
               <div className="rounded-2xl bg-gradient-to-br from-[#0B1F3A] to-gray-800 p-6 text-gray-100 shadow-xl border border-[#C9A44C]/20">
                 {/* Badge */}
@@ -247,9 +241,10 @@ export default async function Home() {
 
                 {/* Texto */}
                 <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                <strong className="text-[#C9A44C] text-base">
-                Durante a avaliação, são analisados aspectos como:
+                  <strong className="text-[#C9A44C] text-base">
+                    Durante a avaliação, são analisados aspectos como:
                   </strong>
+                </p>
 
                 {/* Lista */}
                 <ul className="space-y-2 text-sm text-gray-300 mt-4">
@@ -290,10 +285,9 @@ export default async function Home() {
                     Aspectos de personalidade
                   </li>
                 </ul>
-                  <br /><br />
-                Essa análise permite compreender com mais profundidade como o paciente funciona cognitivamente e emocionalmente. 
-                  <br /><br />
-                  
+
+                <p className="text-sm text-gray-300 leading-relaxed mt-3">
+                  Essa análise permite compreender com mais profundidade como o paciente funciona cognitivamente e emocionalmente.
                 </p>
 
               </div>
@@ -305,9 +299,10 @@ export default async function Home() {
 
                 {/* Texto */}
                 <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                <strong className="text-[#C9A44C] text-base">
-                A avaliação pode ajudar a:
+                  <strong className="text-[#C9A44C] text-base">
+                    A avaliação pode ajudar a:
                   </strong>
+                </p>
 
                 {/* Lista */}
                 <ul className="space-y-2 text-sm text-gray-300 mt-4">
@@ -331,12 +326,10 @@ export default async function Home() {
                     <span className="text-[#C9A44C]">●</span>
                     Orientar escolhas acadêmicas e profissionais
                   </li>
-                  
                 </ul>
-                  <br /><br />
-                  Mais do que um rótulo, o objetivo é trazer clareza sobre o funcionamento cognitivo. 
-                  <br /><br />
-                  
+
+                <p className="text-sm text-gray-300 leading-relaxed mt-3">
+                  Mais do que um rótulo, o objetivo é trazer clareza sobre o funcionamento cognitivo.
                 </p>
 
               </div>
@@ -370,14 +363,14 @@ export default async function Home() {
 
         <section className="mt-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <article className="flex h-full w-full flex-col items-center rounded-2xl border border-gray-200 bg-gray-800 p-4 pr-1 shadow-sm">
+            <article className="flex h-full w-full flex-col items-center rounded-2xl border border-gray-200 bg-gray-800 p-4 shadow-sm">
               <div className="w-full max-w-sm mx-auto overflow-hidden rounded-lg bg-gray-100">
                 <Image
                   src="https://image2url.com/r2/default/images/1769564311518-c9cf014f-d443-4bab-839f-0433ed5eebc6.png"
                   alt="Lucas Cardoso da Silva"
                   width={800}
                   height={600}
-                  className="h-auto w-full"
+                  className="w-full h-auto"
                   sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>
@@ -397,14 +390,14 @@ export default async function Home() {
               </div>
             </article>
 
-            <article className="flex h-full w-full flex-col items-center rounded-2xl border border-gray-200 bg-gray-800 p-4 pr-1 shadow-sm">
+            <article className="flex h-full w-full flex-col items-center rounded-2xl border border-gray-200 bg-gray-800 p-4 shadow-sm">
               <div className="w-full max-w-sm mx-auto overflow-hidden rounded-lg bg-gray-100">
                 <Image
                   src="https://image2url.com/r2/default/images/1769520414061-8e1cc35e-b003-4f42-9e1a-dedd7bd1fea7.png"
                   alt="Dr. Cristiano Herrera"
                   width={800}
                   height={600}
-                  className="h-auto w-full"
+                  className="w-full h-auto"
                   sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>

@@ -119,18 +119,14 @@ function NeuroWelcomeHero({ scheduleHref }: { scheduleHref: string }) {
   );
 }
 
-export default function AvaliacaoNeuropsicologicaPage() {
-  const hotmartUrl = "https://pay.hotmart.com/SEU-CODIGO";
-  const whatsappNumber = WHATSAPP_NUMBER;
-  const whatsappPurchaseLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Olá, eu gostaria de saber mais e efetuar a compra da minha avaliação neuropsicológica."
-  )}`;
-  const whatsappScheduleLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Olá, desejo agendar minha avaliação."
-  )}`;
-  const { user } = useAuth();
-  const [hasAccessTag, setHasAccessTag] = useState<boolean | null>(null);
-  const faqItems = [
+const whatsappPurchaseLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  "Olá, eu gostaria de saber mais e efetuar a compra da minha avaliação neuropsicológica."
+)}`;
+const whatsappScheduleLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  "Olá, desejo agendar minha avaliação."
+)}`;
+
+const faqItems = [
     {
       title: "1. Como saber se eu (ou meu filho) realmente preciso de uma Avaliação Neuropsicológica?",
       body:
@@ -161,7 +157,11 @@ export default function AvaliacaoNeuropsicologicaPage() {
       body:
         "Com certeza. É cada vez mais comum que adultos busquem a avaliação após passarem a vida inteira sentindo-se 'desajustados' ou recebendo diagnósticos errados de ansiedade e depressão. A descoberta tardia de uma neurodivergência costuma ser um momento de grande alívio e ressignificação da própria história, permitindo que o adulto finalmente entenda seus limites e aprenda a usar suas habilidades naturais a seu favor.",
     },
-  ];
+];
+
+export default function AvaliacaoNeuropsicologicaPage() {
+  const { user } = useAuth();
+  const [hasAccessTag, setHasAccessTag] = useState<boolean | null>(null);
 
   const isPatient = user?.type === "paciente";
 
