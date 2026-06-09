@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sanitizeEmail, validateEmail } from "@/lib/validations";
+import { requireAuth } from "@/lib/auth";
+import type { VerifiedPayload } from "@/lib/jwt";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// Só o próprio terapeuta ou um admin pode ver/gerenciar a lista de pacientes.
+function ownsOrAdmin(auth: VerifiedPayload, therapistId: string): boolean {
+  return auth.role === "ADMIN" || (auth.type === "profissional" && auth.sub === therapistId);
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { id } = await params;
+    if (!ownsOrAdmin(auth, id)) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
     const therapist = await prisma.therapist.findUnique({
       where: { id },
       select: { profile: true }
@@ -35,8 +48,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { id } = await params;
+    if (!ownsOrAdmin(auth, id)) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
     const body = await req.json().catch(() => ({}));
     const { email } = body as { email?: string };
     if (!email) {
@@ -91,8 +110,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { id } = await params;
+    if (!ownsOrAdmin(auth, id)) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
     const body = await req.json().catch(() => ({}));
     const { patientId } = body as { patientId?: string };
     if (!patientId) {

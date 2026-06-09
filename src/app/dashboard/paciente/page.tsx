@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { authHeaders } from "@/lib/api-client";
 
 export default function PacienteDashboard() {
   const { user, logout } = useAuth();
@@ -37,7 +38,7 @@ export default function PacienteDashboard() {
     const load = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`/api/stats/paciente?userId=${user.id}`, { cache: 'no-store' });
+        const res = await fetch(`/api/stats/paciente?userId=${user.id}`, { cache: 'no-store', headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setCounts(data);
@@ -50,7 +51,7 @@ export default function PacienteDashboard() {
     const loadProfile = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store" });
+        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store", headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setProfileData(data?.profile || {});
@@ -108,7 +109,7 @@ export default function PacienteDashboard() {
     try {
       const res = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({
           profile: {
             cep: profileForm.cep.trim(),

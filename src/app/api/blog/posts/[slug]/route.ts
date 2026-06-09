@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireAuth, getAuthPayload } from '@/lib/auth';
 
 // GET - Buscar post por ID ou slug
 // Aceita tanto ID (CUID) quanto slug
@@ -7,14 +8,8 @@ import { prisma } from '@/lib/db';
 // Se não estiver publicado, retorna formato para edição
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const therapistId = searchParams.get("therapistId");
-    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
     const identifier = slug; // O parâmetro pode ser ID ou slug
-    
-    console.log('🔍 Fetching post with identifier:', identifier);
 
     // Try to find by ID first
     let post = null;
@@ -103,24 +98,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json(formatted);
     }
 
-    // If not published, allow only admin or post author
+    // If not published, allow only admin or post author (identidade via token).
+    const auth = await getAuthPayload(req);
     let canAccess = false;
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
-      if (user?.role === "ADMIN" || post.authorUserId === userId) {
+    if (auth) {
+      if (auth.role === "ADMIN") {
         canAccess = true;
-      }
-    }
-    if (!canAccess && adminEmail) {
-      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
-      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
-        canAccess = true;
-      }
-    }
-    if (!canAccess && therapistId) {
-      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
-      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
-        canAccess = true;
+      } else if (auth.type === "profissional") {
+        canAccess = post.authorTherapistId === auth.sub;
+      } else {
+        canAccess = post.authorUserId === auth.sub;
       }
     }
 
@@ -143,14 +130,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const therapistId = searchParams.get("therapistId");
-    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
     const identifier = slug; // Pode ser ID ou slug
-    
+
     // Try to find by ID first
     let post = await prisma.post.findUnique({
       where: { id: identifier },
@@ -169,24 +155,20 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ s
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    // Autorização: admin, ou terapeuta autorizado dono do post, ou usuário autor.
     let canDelete = false;
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
-      if (user?.role === "ADMIN" || post.authorUserId === userId) {
-        canDelete = true;
+    if (auth.role === "ADMIN") {
+      canDelete = true;
+    } else if (auth.type === "profissional") {
+      if (post.authorTherapistId === auth.sub) {
+        const therapist = await prisma.therapist.findUnique({
+          where: { id: auth.sub },
+          select: { canPostBlog: true }
+        });
+        canDelete = !!therapist?.canPostBlog;
       }
-    }
-    if (!canDelete && adminEmail) {
-      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
-      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
-        canDelete = true;
-      }
-    }
-    if (!canDelete && therapistId) {
-      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
-      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
-        canDelete = true;
-      }
+    } else if (post.authorUserId === auth.sub) {
+      canDelete = true;
     }
 
     if (!canDelete) {

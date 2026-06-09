@@ -2,6 +2,7 @@
 
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
+import { authHeaders } from "@/lib/api-client";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -174,7 +175,7 @@ export default function AvaliacaoNeuropsicologicaPage() {
     let cancelled = false;
     const loadAccessTag = async () => {
       try {
-        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store" });
+        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store", headers: authHeaders() });
         if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         const profile = data?.profile ?? {};

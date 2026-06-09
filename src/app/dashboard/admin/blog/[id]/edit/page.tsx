@@ -8,6 +8,7 @@ import Image from "@tiptap/extension-image";
 import TipTapLink from "@tiptap/extension-link";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { authHeaders } from "@/lib/api-client";
 
 export default function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
@@ -148,14 +149,14 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         }
         
         // First, try the [id] endpoint (accepts both ID and slug)
-        res = await fetch(`/api/blog/posts/${identifier}?${params.toString()}`);
+        res = await fetch(`/api/blog/posts/${identifier}?${params.toString()}`, { headers: authHeaders() });
         if (res.ok) {
           post = await res.json();
           console.log('✅ Post loaded via [id] endpoint:', { id: post.id, slug: post.slug, title: post.title });
         } else {
           console.log('⚠️ [id] endpoint failed, trying [slug]/edit endpoint');
           // If that fails, try the edit endpoint directly (accepts slug)
-          res = await fetch(`/api/blog/posts/${identifier}/edit?${params.toString()}`);
+          res = await fetch(`/api/blog/posts/${identifier}/edit?${params.toString()}`, { headers: authHeaders() });
           if (res.ok) {
             post = await res.json();
             console.log('✅ Post loaded via [slug]/edit endpoint:', { id: post.id, slug: post.slug, title: post.title });
@@ -262,7 +263,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       } else if (user?.type === "profissional") {
         params.set("therapistId", user.id);
       }
-      const postRes = await fetch(`/api/blog/posts/${identifier}?${params.toString()}`);
+      const postRes = await fetch(`/api/blog/posts/${identifier}?${params.toString()}`, { headers: authHeaders() });
       if (!postRes.ok) {
         const errorData = await postRes.json().catch(() => ({ error: 'Post not found' }));
         console.error('❌ Failed to fetch post:', errorData);
@@ -300,11 +301,8 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       // Admin users should send userId (admin is a User in the database, even if type is 'profissional' in frontend)
       const updateRes = await fetch(`/api/blog/posts/${post.slug}/edit`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.role === 'ADMIN' ? user.id : (user?.type === 'paciente' ? user.id : null),
-          therapistId: user?.role !== 'ADMIN' && user?.type === 'profissional' ? user.id : null,
-          adminEmail: user?.role === 'ADMIN' ? user.email : null,
           title: formData.title.trim(),
           content: editor?.getHTML().trim() || "",
           excerpt: formData.excerpt.trim() || null,

@@ -56,7 +56,11 @@ export default function SiteHeader() {
           return;
         }
         if (user.type === "profissional") {
-          const res = await fetch(`/api/therapists/${user.id}`, { cache: "no-store" });
+          const token = localStorage.getItem("psicoasis_token");
+          const res = await fetch(`/api/therapists/${user.id}`, {
+            cache: "no-store",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
           if (!res.ok) return;
           const data = await res.json();
           setPhotoUrl(data?.photoUrl ?? null);

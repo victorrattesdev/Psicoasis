@@ -1,41 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { fromJsonString } from "@/lib/json-utils";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const therapistId = searchParams.get("therapistId");
-    const adminEmail = searchParams.get("adminEmail");
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
 
-    let canViewAll = false;
+  try {
     let whereClause: any = {};
 
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
-      if (user?.role === "ADMIN") {
-        canViewAll = true;
-      }
-    }
-
-    if (!canViewAll && adminEmail) {
-      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
-      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
-        canViewAll = true;
-      }
-    }
-
-    if (!canViewAll && therapistId) {
-      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
-      if (therapist?.canPostBlog) {
-        whereClause = { authorTherapistId: therapistId };
-      } else {
+    if (auth.role === "ADMIN") {
+      whereClause = {}; // admin vê todos
+    } else if (auth.type === "profissional") {
+      const therapist = await prisma.therapist.findUnique({
+        where: { id: auth.sub },
+        select: { canPostBlog: true },
+      });
+      if (!therapist?.canPostBlog) {
         return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
       }
-    }
-
-    if (!canViewAll && !therapistId) {
+      whereClause = { authorTherapistId: auth.sub };
+    } else {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
 

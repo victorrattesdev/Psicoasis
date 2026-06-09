@@ -3,8 +3,12 @@ import bcrypt from 'bcryptjs';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { id: 'auth-login', limit: 10, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { email, password, type } = body as {

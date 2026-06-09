@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { authHeaders } from "@/lib/api-client";
 
 interface BlogPost {
   id: string;
@@ -38,7 +39,7 @@ export default function AdminBlogPage() {
         } else if (user.type === "profissional") {
           params.set("therapistId", user.id);
         }
-        const res = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store' });
+        const res = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store', headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setPosts(Array.isArray(data?.posts) ? data.posts : []);
@@ -87,6 +88,7 @@ export default function AdminBlogPage() {
       }
       const res = await fetch(`/api/blog/posts/${post.slug}?${params.toString()}`, {
         method: 'DELETE',
+        headers: authHeaders(),
       });
       
       if (res.ok) {
@@ -125,12 +127,12 @@ export default function AdminBlogPage() {
       }
 
       // Get the full post content using the edit API (works for both published and draft)
-      const getRes = await fetch(`/api/blog/posts/${post.id}?${params.toString()}`);
+      const getRes = await fetch(`/api/blog/posts/${post.id}?${params.toString()}`, { headers: authHeaders() });
       let postData;
-      
+
       if (!getRes.ok) {
         // If not found by ID, try by slug using edit endpoint
-        const getResBySlug = await fetch(`/api/blog/posts/${post.slug}/edit?${params.toString()}`);
+        const getResBySlug = await fetch(`/api/blog/posts/${post.slug}/edit?${params.toString()}`, { headers: authHeaders() });
         if (!getResBySlug.ok) {
           alert('Erro ao carregar post para edição');
           return;
@@ -143,11 +145,8 @@ export default function AdminBlogPage() {
       // Update the post using slug
       const res = await fetch(`/api/blog/posts/${postData.slug}/edit`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.role === 'ADMIN' ? user.id : (user?.type === 'paciente' ? user.id : null),
-          therapistId: user?.role !== 'ADMIN' && user?.type === 'profissional' ? user.id : null,
-          adminEmail: user?.role === 'ADMIN' ? user.email : null,
           title: postData.title || post.title,
           content: postData.content || '',
           excerpt: postData.excerpt || post.excerpt || '',
@@ -159,7 +158,7 @@ export default function AdminBlogPage() {
       
       if (res.ok) {
         // Reload posts to get updated data
-        const postsRes = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store' });
+        const postsRes = await fetch(`/api/blog/admin/posts?${params.toString()}`, { cache: 'no-store', headers: authHeaders() });
         if (postsRes.ok) {
           const data = await postsRes.json();
           setPosts(Array.isArray(data?.posts) ? data.posts : []);

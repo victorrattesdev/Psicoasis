@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { authHeaders } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -149,7 +150,7 @@ export default function ProfissionalDashboard() {
     const load = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`/api/stats/profissional?therapistId=${user.id}`, { cache: 'no-store' });
+        const res = await fetch(`/api/stats/profissional?therapistId=${user.id}`, { cache: 'no-store', headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setCounts(data);
@@ -163,7 +164,7 @@ export default function ProfissionalDashboard() {
     const loadTherapist = async () => {
       if (!user?.id || user.type !== 'profissional') return;
       try {
-        const res = await fetch(`/api/therapists/${user.id}`, { cache: 'no-store' });
+        const res = await fetch(`/api/therapists/${user.id}`, { cache: 'no-store', headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         if (data?.photoUrl) setPhotoUrl(data.photoUrl);
@@ -202,7 +203,7 @@ export default function ProfissionalDashboard() {
       if (!user?.id || user.type !== 'profissional') return;
       setIsLoadingPatients(true);
       try {
-        const res = await fetch(`/api/therapists/${user.id}/patients`, { cache: "no-store" });
+        const res = await fetch(`/api/therapists/${user.id}/patients`, { cache: "no-store", headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setPatients(Array.isArray(data?.patients) ? data.patients : []);
@@ -221,7 +222,7 @@ export default function ProfissionalDashboard() {
       }
       setIsLoadingPatientDetails(true);
       try {
-        const res = await fetch(`/api/users/${selectedPatient.id}`, { cache: "no-store" });
+        const res = await fetch(`/api/users/${selectedPatient.id}`, { cache: "no-store", headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         setSelectedPatientDetails(data);
@@ -372,7 +373,7 @@ export default function ProfissionalDashboard() {
       };
       const res = await fetch(`/api/therapists/${user.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({
           name: profileForm.nome,
           email: profileForm.email,
@@ -413,7 +414,7 @@ export default function ProfissionalDashboard() {
     try {
       const res = await fetch(`/api/therapists/${user.id}/patients`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ email: patientEmail.trim() })
       });
       if (!res.ok) {
@@ -436,7 +437,7 @@ export default function ProfissionalDashboard() {
     try {
       const res = await fetch(`/api/therapists/${user.id}/patients`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ patientId })
       });
       if (!res.ok) {
@@ -456,7 +457,7 @@ export default function ProfissionalDashboard() {
     try {
       const res = await fetch('/api/therapists/photo', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: user.id, photoUrl })
       });
       if (!res.ok) throw new Error("photo_failed");
@@ -1238,9 +1239,8 @@ export default function ProfissionalDashboard() {
     try {
       const res = await fetch('/api/blog/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          therapistId: user.id,
           title: blogForm.title.trim(),
           content: editor?.getHTML().trim() || "",
           excerpt: blogForm.excerpt.trim() || null,

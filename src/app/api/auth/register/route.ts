@@ -9,8 +9,12 @@ import {
   sanitizeString
 } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { id: 'auth-register', limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { email, password, name, type, profile } = body as {

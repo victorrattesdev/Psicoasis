@@ -1,6 +1,7 @@
 import { prisma } from './db';
 
-const ADMIN_EMAIL = 'admin@admin.com';
+// O e-mail do admin vem do ambiente — nunca hardcoded.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim().toLowerCase() || '';
 
 /**
  * Initialize the database with default admin user
@@ -8,6 +9,11 @@ const ADMIN_EMAIL = 'admin@admin.com';
  */
 export async function initializeDatabase() {
   try {
+    if (!ADMIN_EMAIL) {
+      console.error('❌ ADMIN_EMAIL não configurado; pulando criação de admin.');
+      return { success: false, error: 'ADMIN_EMAIL not set' };
+    }
+
     // Check if default admin exists
     const existingAdmin = await prisma.user.findFirst({
       where: {

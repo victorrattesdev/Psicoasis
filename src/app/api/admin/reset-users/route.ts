@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
+import { sanitizeEmail } from '@/lib/validations';
 
-const ADMIN_EMAIL = 'admin@admin.com';
+const isProd = process.env.NODE_ENV === 'production';
 
 export async function POST(req: NextRequest) {
   try {
     const unauthorized = await requireAdmin(req);
     if (unauthorized) return unauthorized;
+
+    // Confirmação explícita para operação destrutiva (apaga todos os não-admins).
+    const body = await req.json().catch(() => ({}));
+    if (body?.confirm !== 'RESET') {
+      return NextResponse.json(
+        { error: 'Operação destrutiva: envie { "confirm": "RESET" } para confirmar.' },
+        { status: 400 }
+      );
+    }
+
+    // O e-mail do admin vem do ambiente — nunca hardcoded.
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL ? sanitizeEmail(process.env.ADMIN_EMAIL) : null;
+    if (!ADMIN_EMAIL) {
+      return NextResponse.json({ error: 'ADMIN_EMAIL não configurado' }, { status: 500 });
+    }
 
     // Delete all non-admin users
     const deletedUsers = await prisma.user.deleteMany({
@@ -36,7 +52,7 @@ export async function POST(req: NextRequest) {
       admin = await prisma.user.create({
         data: {
           email: ADMIN_EMAIL,
-          name: 'Admin OASIS da Superdotação',
+          name: process.env.ADMIN_NAME || 'Administrador',
           role: 'ADMIN',
           profile: {
             isAdmin: true,
@@ -74,9 +90,9 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const prismaError = handlePrismaError(error);
     console.error('Reset users error:', error);
-    
+
     return NextResponse.json(
-      { error: prismaError.message || 'Erro ao resetar usuários' },
+      { error: isProd ? 'Erro ao resetar usuários' : (prismaError.message || 'Erro ao resetar usuários') },
       { status: 500 }
     );
   }

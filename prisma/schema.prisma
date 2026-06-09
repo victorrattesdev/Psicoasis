@@ -47,8 +47,8 @@ enum MessageType {
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  email     String   @unique @db.VarChar(320)
+  name      String?  @db.VarChar(200)
   password  String?
   role      UserRole @default(USER)
   profile   Json?
@@ -67,10 +67,10 @@ model User {
 
 model Therapist {
   id          String   @id @default(cuid())
-  email       String   @unique
-  name        String
+  email       String   @unique @db.VarChar(320)
+  name        String   @db.VarChar(200)
   password    String?
-  license     String?
+  license     String?  @db.VarChar(60)
   specialties Json     @default("[]")
   bio         String?
   photoUrl    String?
@@ -147,17 +147,17 @@ model Blog {
 
 model Post {
   id              String   @id @default(cuid())
-  title           String
-  slug            String   @unique
-  content         String
-  excerpt         String?
-  coverImage      String?
+  title           String   @db.VarChar(200)
+  slug            String   @unique @db.VarChar(250)
+  content         String   // HTML; tamanho limitado na aplicação (ver lib/security.ts)
+  excerpt         String?  @db.VarChar(600)
+  coverImage      String?  // URL https ou data: (limitado na aplicação)
   published       Boolean  @default(false)
   publishedAt     DateTime?
-  metaTitle       String?
-  metaDescription String?
-  keywords        String?
-  category        String?
+  metaTitle       String?  @db.VarChar(200)
+  metaDescription String?  @db.VarChar(400)
+  keywords        String?  @db.VarChar(400)
+  category        String?  @db.VarChar(120)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   

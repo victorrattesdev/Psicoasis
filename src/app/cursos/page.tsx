@@ -2,6 +2,7 @@
 
 import SiteFooter from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
+import { authHeaders } from "@/lib/api-client";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { useEffect, useState } from "react";
 
@@ -162,7 +163,7 @@ export default function CursosPage() {
     setIsAccessLoading(true);
     const loadAccess = async () => {
       try {
-        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store" });
+        const res = await fetch(`/api/users/${user.id}`, { cache: "no-store", headers: authHeaders() });
         if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         const profile = data?.profile ?? {};
@@ -376,12 +377,8 @@ export default function CursosPage() {
     try {
       const response = await fetch("/api/courses", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user?.id,
-          adminEmail: user?.email,
-          sections,
-        }),
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ sections }),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

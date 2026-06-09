@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import BlogPostClient from "./BlogPostClient";
 import { notFound } from "next/navigation";
+import { sanitizeHtml } from "@/lib/security";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   try {
@@ -80,6 +81,10 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     notFound();
   }
 
-  return <BlogPostClient post={post} />;
+  // Sanitiza o HTML no servidor antes de renderizar (defesa em profundidade,
+  // protege também posts antigos salvos antes da sanitização na escrita).
+  const safePost = { ...post, content: sanitizeHtml(post.content) };
+
+  return <BlogPostClient post={safePost} />;
 }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { sanitizeEmail, sanitizeString } from '@/lib/validations';
+import { rateLimit } from '@/lib/rate-limit';
 
 function checkSecret(req: NextRequest): boolean {
   const secret = process.env.ADMIN_INIT_SECRET;
@@ -12,6 +13,8 @@ function checkSecret(req: NextRequest): boolean {
 // Inicializa o admin padrão — protegido por ADMIN_INIT_SECRET
 // Uso: GET /api/auth/admin/register?secret=SEU_SECRET
 export async function GET(req: NextRequest) {
+  const limited = rateLimit(req, { id: 'admin-init', limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
   if (!checkSecret(req)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
@@ -60,6 +63,8 @@ export async function GET(req: NextRequest) {
 // Cria admin adicional — protegido por ADMIN_INIT_SECRET
 // Uso: POST /api/auth/admin/register?secret=SEU_SECRET
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { id: 'admin-init', limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
   if (!checkSecret(req)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }

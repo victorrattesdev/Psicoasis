@@ -8,6 +8,7 @@ import Image from "@tiptap/extension-image";
 import TipTapLink from "@tiptap/extension-link";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { authHeaders } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 
 export default function NewBlogPostPage() {
@@ -199,12 +200,10 @@ export default function NewBlogPostPage() {
       const response = await fetch('/api/blog/create', {
         method: 'POST',
         headers: {
+          ...authHeaders(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user?.role === "ADMIN" ? user.id : (user?.type === 'paciente' ? user.id : null),
-          therapistId: user?.role !== "ADMIN" && user?.type === 'profissional' ? user.id : null,
-          adminEmail: user?.role === "ADMIN" ? user.email : null,
           title: formData.title.trim(),
           content: editor?.getHTML().trim() || "",
           excerpt: formData.excerpt.trim() || null,

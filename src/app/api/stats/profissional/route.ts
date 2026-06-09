@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const therapistId = req.nextUrl.searchParams.get('therapistId');
     if (!therapistId) return NextResponse.json({ error: 'Missing therapistId' }, { status: 400 });
+    if (auth.role !== 'ADMIN' && auth.sub !== therapistId) {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+    }
 
     const [todayCount, patientsCount, monthlyRevenue] = await Promise.all([
       prisma.session.count({

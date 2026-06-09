@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { requireAdminPayload } from "@/lib/auth";
 
 const DEFAULT_KEY = "default";
 
@@ -26,32 +27,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdminPayload(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = await req.json().catch(() => ({}));
-    const { userId, adminEmail, sections } = body as {
-      userId?: string;
-      adminEmail?: string;
-      sections?: unknown;
-    };
-
-    let isAdmin = false;
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
-      if (user?.role === "ADMIN") isAdmin = true;
-    }
-    if (!isAdmin && adminEmail) {
-      const adminUser = await prisma.user.findFirst({
-        where: { email: adminEmail },
-        select: { role: true }
-      });
-      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
-        isAdmin = true;
-      }
-    }
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
-    }
+    const { sections } = body as { sections?: unknown };
 
     if (!Array.isArray(sections)) {
       return NextResponse.json({ error: "Formato inválido" }, { status: 400 });

@@ -3,10 +3,14 @@ import { createHash, timingSafeEqual } from 'crypto';
 import { prisma, handlePrismaError } from '@/lib/db';
 import { validateEmail, sanitizeEmail } from '@/lib/validations';
 import { signUserToken } from '@/lib/jwt';
+import { rateLimit } from '@/lib/rate-limit';
 
 const sha256 = (s: string) => createHash('sha256').update(s).digest();
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { id: 'auth-admin-login', limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;

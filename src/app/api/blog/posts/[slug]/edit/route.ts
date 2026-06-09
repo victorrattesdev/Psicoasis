@@ -1,85 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireAuth } from '@/lib/auth';
+import {
+  sanitizeHtml,
+  isSafeImageValue,
+  exceedsLength,
+  MAX_TITLE_LENGTH,
+  MAX_EXCERPT_LENGTH,
+  MAX_SHORT_FIELD_LENGTH,
+  MAX_META_FIELD_LENGTH,
+  MAX_CONTENT_LENGTH,
+} from '@/lib/security';
+import type { VerifiedPayload } from '@/lib/jwt';
+
+const isProd = process.env.NODE_ENV === 'production';
 
 function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\p{Diacritic}/gu, '')
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim();
 }
 
+// Verifica se o usuário do token pode acessar/editar o post.
+async function canEditPost(
+  auth: VerifiedPayload,
+  post: { authorUserId: string | null; authorTherapistId: string | null }
+): Promise<boolean> {
+  if (auth.role === 'ADMIN') return true;
+  if (auth.type === 'profissional') {
+    if (post.authorTherapistId !== auth.sub) return false;
+    const therapist = await prisma.therapist.findUnique({
+      where: { id: auth.sub },
+      select: { canPostBlog: true },
+    });
+    return !!therapist?.canPostBlog;
+  }
+  // Paciente autor do post (caso exista).
+  return post.authorUserId === auth.sub;
+}
+
 // GET - Buscar post para edição
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const therapistId = searchParams.get("therapistId");
-    const adminEmail = searchParams.get("adminEmail");
     const { slug } = await params;
-    console.log('🔍 GET edit endpoint - Loading post with slug:', slug);
-    
     const post = await prisma.post.findUnique({
       where: { slug },
       select: {
-        id: true,
-        title: true,
-        slug: true,
-        content: true,
-        excerpt: true,
-        coverImage: true,
-        category: true,
-        published: true,
-        publishedAt: true,
-        metaTitle: true,
-        metaDescription: true,
-        keywords: true,
-        authorUserId: true,
-        authorTherapistId: true,
-        authorUser: {
-          select: { name: true, email: true }
-        },
-        authorTherapist: {
-          select: { name: true, email: true }
-        }
-      }
+        id: true, title: true, slug: true, content: true, excerpt: true,
+        coverImage: true, category: true, published: true, publishedAt: true,
+        metaTitle: true, metaDescription: true, keywords: true,
+        authorUserId: true, authorTherapistId: true,
+        authorUser: { select: { name: true, email: true } },
+        authorTherapist: { select: { name: true, email: true } },
+      },
     });
 
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    let canAccess = false;
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true } });
-      if (user?.role === "ADMIN" || post.authorUserId === userId) {
-        canAccess = true;
-      }
-    }
-    if (!canAccess && adminEmail) {
-      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
-      if (adminUser?.role === "ADMIN" || adminEmail === "admin@admin.com") {
-        canAccess = true;
-      }
-    }
-    if (!canAccess && therapistId) {
-      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId }, select: { canPostBlog: true } });
-      if (therapist?.canPostBlog && post.authorTherapistId === therapistId) {
-        canAccess = true;
-      }
-    }
-
-    if (!canAccess) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    if (!(await canEditPost(auth, post))) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
     return NextResponse.json({
       ...post,
       status: post.published ? 'published' : 'draft',
-      featuredImage: post.coverImage
+      featuredImage: post.coverImage,
     });
   } catch (error) {
     console.error('Error loading post for edit:', error);
@@ -88,85 +83,54 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { slug } = await params;
     const body = await req.json();
-    const { userId, therapistId, adminEmail, title, content, excerpt, coverImage, category, metaTitle, metaDescription, keywords, published } = body;
-
-    console.log('✏️ PUT edit endpoint - Updating post with slug:', slug, { userId, therapistId, title });
+    const { title, content, excerpt, coverImage, category, metaTitle, metaDescription, keywords, published } = body;
 
     const existing = await prisma.post.findUnique({
       where: { slug },
-      select: { id: true, authorUserId: true, authorTherapistId: true, published: true, publishedAt: true }
+      select: { id: true, authorUserId: true, authorTherapistId: true, published: true, publishedAt: true },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Post não encontrado' }, { status: 404 });
     }
 
-    // Check permissions - allow ADMIN users to edit any post
-    let hasPermission = false;
-    
-    // Check if user is admin (admin is always a User in the database)
-    if (userId) {
-      const user = await prisma.user.findFirst({ where: { id: userId }, select: { role: true, email: true } });
-      console.log('User found:', { id: userId, role: user?.role, email: user?.email });
-      if (user?.role === 'ADMIN') {
-        // Admin can edit any post
-        hasPermission = true;
-        console.log('Permission granted: Admin user');
-      } else if (existing.authorUserId === userId) {
-        // User can edit their own posts
-        hasPermission = true;
-        console.log('Permission granted: Post author');
-      }
-    }
-
-    if (!hasPermission && adminEmail) {
-      const adminUser = await prisma.user.findFirst({ where: { email: adminEmail }, select: { role: true } });
-      if (adminUser?.role === 'ADMIN' || adminEmail === 'admin@admin.com') {
-        hasPermission = true;
-        console.log('Permission granted: Admin email');
-      }
-    }
-    
-    // Check if therapist has permission
-    if (!hasPermission && therapistId) {
-      const therapist = await prisma.therapist.findFirst({ where: { id: therapistId } });
-      console.log('Therapist found:', { id: therapistId, email: therapist?.email, canPostBlog: (therapist as any)?.canPostBlog });
-      if (therapist) {
-        // Therapist can edit their own posts if they have canPostBlog permission
-        if ((therapist as any)?.canPostBlog === true && existing.authorTherapistId === therapistId) {
-          hasPermission = true;
-          console.log('Permission granted: Therapist author');
-        }
-      }
-    }
-    
-    // If no userId or therapistId provided, try to find admin user
-    if (!hasPermission && !userId && !therapistId) {
-      console.log('No userId or therapistId provided, checking for admin user');
-      const adminUser = await prisma.user.findFirst({ 
-        where: { email: 'admin@admin.com', role: 'ADMIN' } 
-      });
-      if (adminUser) {
-        hasPermission = true;
-        console.log('Permission granted: Default admin');
-      }
-    }
-
-    if (!hasPermission) {
-      console.error('Permission denied:', { userId, therapistId, existing, slug });
+    if (!(await canEditPost(auth, existing))) {
       return NextResponse.json({ error: 'Não autorizado: Você não tem permissão para editar este post' }, { status: 403 });
     }
 
-    // Validate required fields
     if (!content || !title) {
       return NextResponse.json({ error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
     }
 
-    const updateData: any = {
-      content: content.trim(),
+    // Limites de tamanho + validação de imagem.
+    if (exceedsLength(title, MAX_TITLE_LENGTH)) {
+      return NextResponse.json({ error: 'Título muito longo' }, { status: 413 });
+    }
+    if (exceedsLength(content, MAX_CONTENT_LENGTH)) {
+      return NextResponse.json({ error: 'Conteúdo excede o tamanho máximo permitido' }, { status: 413 });
+    }
+    if (exceedsLength(excerpt, MAX_EXCERPT_LENGTH) || exceedsLength(category, MAX_SHORT_FIELD_LENGTH)) {
+      return NextResponse.json({ error: 'Campo excede o tamanho máximo permitido' }, { status: 413 });
+    }
+    if (
+      exceedsLength(metaTitle, MAX_META_FIELD_LENGTH) ||
+      exceedsLength(metaDescription, MAX_META_FIELD_LENGTH) ||
+      exceedsLength(keywords, MAX_META_FIELD_LENGTH)
+    ) {
+      return NextResponse.json({ error: 'Metadados excedem o tamanho máximo permitido' }, { status: 413 });
+    }
+    if (!isSafeImageValue(coverImage)) {
+      return NextResponse.json({ error: 'Imagem de capa inválida (use uma URL https)' }, { status: 400 });
+    }
+
+    const updateData: Record<string, any> = {
+      content: sanitizeHtml(content.trim()),
       excerpt: excerpt?.trim() || null,
       coverImage: coverImage?.trim() || null,
       category: category?.trim() || null,
@@ -176,45 +140,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
       published: published === true,
     };
 
-    // Handle publishedAt based on published status
     if (published === true) {
-      // If publishing (or already published), set publishedAt
-      // Only set to now if it's being published for the first time
       if (!existing.published || !existing.publishedAt) {
         updateData.publishedAt = new Date();
       }
-      // If already published, keep the existing publishedAt (don't update it)
     } else {
-      // When unpublishing, clear publishedAt so it doesn't appear in public blog
       updateData.publishedAt = null;
     }
 
-    if (title) {
-      const newSlug = slugify(title);
-      try {
-        const slugExists = await (prisma.post as any).findMany({ 
-          where: { slug: newSlug },
-          select: { id: true }
-        });
-        if (!slugExists || slugExists.length === 0 || (slugExists.length === 1 && slugExists[0]?.id === existing.id)) {
-          updateData.title = title;
-          updateData.slug = newSlug;
-        }
-      } catch (error: any) {
-        // If slug field doesn't exist, just update title
-        updateData.title = title;
-        console.warn('Could not check slug uniqueness:', error?.message);
-      }
+    const newSlug = slugify(title);
+    const slugOwner = await prisma.post.findUnique({ where: { slug: newSlug }, select: { id: true } });
+    if (!slugOwner || slugOwner.id === existing.id) {
+      updateData.title = title.trim();
+      updateData.slug = newSlug;
     }
 
-    console.log('✏️ Updating post with data:', { slug, updateData });
+    const updated = await prisma.post.update({ where: { slug }, data: updateData });
 
-    const updated = await prisma.post.update({
-      where: { slug },
-      data: updateData
-    });
-
-    console.log('Post updated successfully:', { id: updated.id, slug: updated.slug });
     return NextResponse.json({ id: updated.id, slug: updated.slug, message: 'Post atualizado com sucesso' });
   } catch (error: any) {
     console.error('Error updating post:', error);
@@ -224,8 +166,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
     if (error?.code === 'P2025') {
       return NextResponse.json({ error: 'Post não encontrado' }, { status: 404 });
     }
-    return NextResponse.json({ 
-      error: error?.message || 'Erro ao atualizar post. Tente novamente.' 
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: isProd ? 'Erro ao atualizar post.' : (error?.message || 'Erro ao atualizar post.') },
+      { status: 500 }
+    );
   }
 }

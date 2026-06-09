@@ -13,7 +13,7 @@ const getJwtSecret = () => {
   throw new Error("JWT_SECRET is not set");
 };
 
-type TokenPayload = {
+export type TokenPayload = {
   sub: string;
   email: string;
   name: string;
@@ -21,11 +21,17 @@ type TokenPayload = {
   role: "USER" | "ADMIN";
 };
 
+export type VerifiedPayload = TokenPayload & { exp?: number; iat?: number };
+
+// Expiração da sessão. Menor = menor janela para um token vazado, já que o
+// logout só limpa o cliente (sem blacklist). Configurável via JWT_EXPIRES.
+const TOKEN_EXPIRATION = process.env.JWT_EXPIRES || "2d";
+
 export const signUserToken = async (payload: TokenPayload) => {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(TOKEN_EXPIRATION)
     .sign(getJwtSecret());
 };
 
@@ -34,7 +40,7 @@ export const verifyUserToken = async (token: string) => {
     algorithms: ["HS256"],
   });
 
-  return payload as TokenPayload & { exp?: number; iat?: number };
+  return payload as VerifiedPayload;
 };
 
 export const getBearerTokenFromRequest = (req: NextRequest): string | null => {
